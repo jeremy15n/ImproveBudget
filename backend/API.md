@@ -2,9 +2,11 @@
 
 ## Overview
 
-The ImproveBudget API is a RESTful API built with Node.js/Express that provides a complete interface for managing personal finances. All responses are in JSON format.
+The ImproveBudget API is a RESTful API built with Node.js/Express that provides a complete interface for managing personal finances. All data is stored locally in a SQLite database file.
 
 **Base URL:** `http://localhost:8000/api`
+**Database Location:** `backend/data/budget.db` (auto-created on first run)
+**Technology:** Node.js, Express, SQLite (sql.js)
 
 ## Table of Contents
 

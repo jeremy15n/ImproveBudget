@@ -35,7 +35,7 @@ ImproveBudget is a full-stack personal finance application with a React frontend
     │  │  └─ Categorization Service        │   │
     │  │  ↓                                │   │
     │  │  Database                         │   │
-    │  │  └─ SQLite (better-sqlite3)       │   │
+    │  │  └─ SQLite (sql.js)               │   │
     │  └──────────────────────────────────┘   │
     │                                          │
     │  File: budget.db                        │
@@ -75,7 +75,7 @@ ImproveBudget is a full-stack personal finance application with a React frontend
 
 **Database:**
 - **SQLite 3** - Lightweight, file-based database
-- **better-sqlite3** - Fast, synchronous SQLite driver
+- **sql.js** - Pure JavaScript SQLite implementation (no native compilation required)
 
 **Data Processing:**
 - **papaparse** - CSV parser with auto-detection
@@ -330,7 +330,7 @@ All tables include `created_at` and `updated_at` timestamps.
 - **Indexing:** Strategic indexes on frequently queried fields
 - **In-Memory Files:** Uploaded files stored in memory temporarily
 - **Prepared Statements:** Reused across requests
-- **Synchronous Database:** better-sqlite3 avoids async overhead for local DB
+- **File-Based Persistence:** sql.js with automatic disk synchronization after writes
 
 ## Environment
 

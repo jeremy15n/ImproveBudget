@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  logLevel: 'error', // Suppress warnings, only show errors
+  logLevel: 'warn', // Suppress verbose info, show warnings and errors
   plugins: [react()],
   resolve: {
     alias: {

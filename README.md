@@ -1,6 +1,6 @@
 # ImproveBudget
 
-A comprehensive personal finance tracking application built with React and Node.js. Take control of your money with features for budgeting, transaction tracking, investment monitoring, and goal setting.
+A **fully local** personal finance tracking application with no cloud services required. Built with React and Node.js, all your financial data stays on your computer. Track transactions, manage budgets, monitor investments, and set financial goals - completely private and portable.
 
 ## Features
 
@@ -27,16 +27,18 @@ A comprehensive personal finance tracking application built with React and Node.
 ### Backend
 - **Node.js** - Runtime
 - **Express** - Web framework
-- **SQLite** - Local database
-- **better-sqlite3** - SQLite driver
+- **SQLite** - Local file-based database
+- **sql.js** - Pure JavaScript SQLite (no native dependencies)
 - **papaparse** - CSV parser
 
 ## Quick Start
 
+**Want to get started immediately?** See [QUICKSTART.md](QUICKSTART.md) for a 3-minute setup guide.
+
 ### Prerequisites
 
-- **Node.js 18+** - [Download](https://nodejs.org)
-- **npm** or **yarn** - Comes with Node.js
+- **Node.js 18 or higher** - [Download here](https://nodejs.org)
+- **npm** - Comes with Node.js (no additional installation needed)
 
 ### Installation
 
@@ -52,12 +54,15 @@ A comprehensive personal finance tracking application built with React and Node.
    cd backend && npm install && cd ..
    ```
 
-3. **Set up environment variables:**
+3. **Set up environment variables (optional):**
+
+   The application works with default settings. Only create these files if you need custom configuration:
+
    ```bash
-   # Frontend configuration
+   # Frontend configuration (optional)
    cp .env.example .env.local
 
-   # Backend configuration
+   # Backend configuration (optional)
    cp backend/.env.example backend/.env
    ```
 
@@ -192,30 +197,76 @@ ImproveBudget can import transactions from the following banks and institutions:
 2. Go to "Account Statements"
 3. Use CSV export option
 
-## Database
+## Your Data
 
-### Location
-- Development: `backend/data/budget.db`
-- SQLite single-file database, easily portable
+### Where Your Data Lives
 
-### Backup
-Copy the database file to backup location:
-```bash
-cp backend/data/budget.db backup/budget.db.bak
+**All your financial data is stored locally in a single file:**
+
+```
+backend/data/budget.db
 ```
 
-### Restore
-Replace the database file:
+This SQLite database file contains:
+- All transactions
+- Accounts
+- Budgets
+- Investment holdings
+- Financial goals
+- Net worth snapshots
+- Categorization rules
+
+**No data leaves your computer.** There are no cloud backups, no external services, and no third-party access.
+
+### Backup Your Data
+
+To backup your financial data, simply copy the database file:
+
+**Windows:**
 ```bash
-cp backup/budget.db.bak backend/data/budget.db
+copy backend\data\budget.db C:\Backups\budget-backup-2025-02-13.db
 ```
 
-### Reset
-Delete the database file and restart the server:
+**Mac/Linux:**
+```bash
+cp backend/data/budget.db ~/Backups/budget-backup-2025-02-13.db
+```
+
+**Recommended:** Set up automatic backups to external drive or cloud storage (Dropbox, Google Drive, etc.)
+
+### Restore From Backup
+
+Replace the current database with your backup:
+
+**Windows:**
+```bash
+copy C:\Backups\budget-backup-2025-02-13.db backend\data\budget.db
+```
+
+**Mac/Linux:**
+```bash
+cp ~/Backups/budget-backup-2025-02-13.db backend/data/budget.db
+```
+
+Then restart the application.
+
+### Start Fresh
+
+To reset and start with a clean database:
+
+**Windows:**
+```bash
+del backend\data\budget.db
+npm run dev:backend
+```
+
+**Mac/Linux:**
 ```bash
 rm backend/data/budget.db
 npm run dev:backend
 ```
+
+A new empty database will be created automatically.
 
 ## Configuration
 
