@@ -1,12 +1,12 @@
-import { db } from '../config/database.js';
+import { getDb } from '../config/database.js';
 
 /**
  * Generic database service for CRUD operations
  * Works with all entity types in a consistent manner
  */
 export class DatabaseService {
-  constructor() {
-    this.db = db;
+  get db() {
+    return getDb();
   }
 
   /**
@@ -19,6 +19,11 @@ export class DatabaseService {
    */
   list(table, filters = {}, sort = {}, limit = null) {
     try {
+      const dbInstance = this.db;
+      if (!dbInstance) {
+        throw new Error('Database not initialized');
+      }
+
       let query = `SELECT * FROM ${this.escapeTableName(table)}`;
       const params = [];
 
@@ -39,7 +44,7 @@ export class DatabaseService {
         query += ` LIMIT ${parseInt(limit)}`;
       }
 
-      const stmt = this.db.prepare(query);
+      const stmt = dbInstance.prepare(query);
       return stmt.all(...params);
     } catch (error) {
       throw new Error(`Failed to list ${table}: ${error.message}`);
@@ -212,8 +217,19 @@ export class DatabaseService {
    * @returns {string} Escaped table name
    */
   escapeTableName(table) {
-    // Convert entity name to table name (camelCase to lowercase)
-    return `\`${table.toLowerCase()}\``;
+    // Map entity names to table names (singular to plural)
+    const tableMap = {
+      'transaction': 'transactions',
+      'account': 'accounts',
+      'budget': 'budgets',
+      'categoryrule': 'categoryrules',
+      'financialgoal': 'financialgoals',
+      'investment': 'investments',
+      'networthsnapshot': 'networthsnapshots'
+    };
+
+    const tableName = tableMap[table.toLowerCase()] || table.toLowerCase();
+    return `\`${tableName}\``;
   }
 
   /**

@@ -184,7 +184,9 @@ const initializeDatabase = async () => {
           try {
             db.sqlDb.run(statement);
           } catch (error) {
-            console.warn(`Skipping statement:${statement.slice(0, 50)}...`);
+            console.error(`Error executing statement: ${error.message}`);
+            console.error(`Statement: ${statement.slice(0, 100)}...`);
+            // Don't throw - some statements like CREATE INDEX IF NOT EXISTS may fail safely
           }
         }
       }
@@ -200,5 +202,6 @@ const initializeDatabase = async () => {
   }
 };
 
-// Export database once initialized
-export { db, DB_PATH, initializeDatabase };
+// Export database getter and initialization function
+export const getDb = () => db;
+export { DB_PATH, initializeDatabase };
