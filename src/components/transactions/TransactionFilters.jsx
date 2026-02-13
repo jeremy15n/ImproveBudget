@@ -1,0 +1,41 @@
+import React from "react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Filter } from "lucide-react";
+import { getCategoryLabel } from "../shared/formatters";
+
+const CATEGORIES = ["all", "housing", "transportation", "food_dining", "groceries", "utilities", "insurance", "healthcare", "debt_payments", "subscriptions", "entertainment", "shopping", "personal_care", "education", "travel", "gifts_donations", "investments", "savings", "income_salary", "income_freelance", "income_investment", "income_other", "transfer", "refund", "fee", "uncategorized"];
+const TYPES = ["all", "income", "expense", "transfer", "refund"];
+
+export default function TransactionFilters({ filters, setFilters, accounts }) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200/60 p-4 mb-4">
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            placeholder="Search transactions..."
+            className="pl-9"
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          />
+        </div>
+        <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
+          <SelectTrigger className="w-[160px]"><Filter className="w-3.5 h-3.5 mr-2 text-slate-400" /><SelectValue placeholder="Category" /></SelectTrigger>
+          <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c === "all" ? "All Categories" : getCategoryLabel(c)}</SelectItem>)}</SelectContent>
+        </Select>
+        <Select value={filters.type} onValueChange={(v) => setFilters({ ...filters, type: v })}>
+          <SelectTrigger className="w-[130px]"><SelectValue placeholder="Type" /></SelectTrigger>
+          <SelectContent>{TYPES.map((t) => <SelectItem key={t} value={t}>{t === "all" ? "All Types" : t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}</SelectContent>
+        </Select>
+        <Select value={filters.account} onValueChange={(v) => setFilters({ ...filters, account: v })}>
+          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Account" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Accounts</SelectItem>
+            {accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
