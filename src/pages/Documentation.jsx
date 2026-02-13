@@ -27,8 +27,8 @@ Monarch gives you **full visibility** into every dollar you earn, spend, save, a
 
 ### Setup Required
 To enable automatic transaction syncing, you need to:
-1. Go to **Dashboard → Settings** in Base44
-2. Enable **Backend Functions**
+1. Configure your backend to support Plaid integration
+2. Enable **Backend Functions** in your deployment
 3. Return to the app and a Plaid integration option will appear
 
 ### Supported Institutions

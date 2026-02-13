@@ -1,0 +1,27 @@
+{
+  "name": "improvebudget-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Local REST API backend for ImproveBudget",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [
+    "budget",
+    "finance",
+    "api",
+    "express",
+    "sqlite"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "better-sqlite3": "^11.0.0",
+    "multer": "^1.4.5-lts.1",
+    "papaparse": "^5.4.1"
+  }
+}
