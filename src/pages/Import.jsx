@@ -1,5 +1,5 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
+import { apiClient } from "@/api/apiClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Upload, Shield, RefreshCw, FileSpreadsheet } from "lucide-react";
 import PageHeader from "../components/shared/PageHeader";
@@ -9,7 +9,7 @@ export default function Import() {
   const qc = useQueryClient();
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
-    queryFn: () => base44.entities.Account.list(),
+    queryFn: () => apiClient.entities.Account.list(),
   });
 
   return (

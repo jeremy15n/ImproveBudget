@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import { Plus, TrendingUp, Camera } from "lucide-react";
@@ -14,19 +14,19 @@ export default function NetWorth() {
   const qc = useQueryClient();
   const { data: snapshots = [] } = useQuery({
     queryKey: ["nw-snapshots"],
-    queryFn: () => base44.entities.NetWorthSnapshot.list("date"),
+    queryFn: () => apiClient.entities.NetWorthSnapshot.list("date"),
   });
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
-    queryFn: () => base44.entities.Account.list(),
+    queryFn: () => apiClient.entities.Account.list(),
   });
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 500),
+    queryFn: () => apiClient.entities.Transaction.list("-date", 500),
   });
 
   const snapshotMut = useMutation({
-    mutationFn: (d) => base44.entities.NetWorthSnapshot.create(d),
+    mutationFn: (d) => apiClient.entities.NetWorthSnapshot.create(d),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["nw-snapshots"] }),
   });
 

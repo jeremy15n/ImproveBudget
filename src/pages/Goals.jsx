@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Target, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,19 +26,19 @@ export default function Goals() {
 
   const { data: goals = [], isLoading } = useQuery({
     queryKey: ["goals"],
-    queryFn: () => base44.entities.FinancialGoal.list(),
+    queryFn: () => apiClient.entities.FinancialGoal.list(),
   });
 
   const createMut = useMutation({
-    mutationFn: (d) => base44.entities.FinancialGoal.create(d),
+    mutationFn: (d) => apiClient.entities.FinancialGoal.create(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["goals"] }); closeDialog(); },
   });
   const updateMut = useMutation({
-    mutationFn: ({ id, d }) => base44.entities.FinancialGoal.update(id, d),
+    mutationFn: ({ id, d }) => apiClient.entities.FinancialGoal.update(id, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["goals"] }); closeDialog(); },
   });
   const deleteMut = useMutation({
-    mutationFn: (id) => base44.entities.FinancialGoal.delete(id),
+    mutationFn: (id) => apiClient.entities.FinancialGoal.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["goals"] }),
   });
 

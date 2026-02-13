@@ -1,5 +1,5 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
+import { apiClient } from "@/api/apiClient";
 import { useQuery } from "@tanstack/react-query";
 import { DollarSign, TrendingUp, TrendingDown, Percent } from "lucide-react";
 import moment from "moment";
@@ -15,17 +15,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function Dashboard() {
   const { data: transactions = [], isLoading: loadingTx } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 500),
+    queryFn: () => apiClient.entities.Transaction.list("-date", 500),
   });
 
   const { data: accounts = [], isLoading: loadingAcc } = useQuery({
     queryKey: ["accounts"],
-    queryFn: () => base44.entities.Account.list(),
+    queryFn: () => apiClient.entities.Account.list(),
   });
 
   const { data: snapshots = [] } = useQuery({
     queryKey: ["nw-snapshots"],
-    queryFn: () => base44.entities.NetWorthSnapshot.list("-date", 2),
+    queryFn: () => apiClient.entities.NetWorthSnapshot.list("-date", 2),
   });
 
   const currentMonth = moment().format("YYYY-MM");

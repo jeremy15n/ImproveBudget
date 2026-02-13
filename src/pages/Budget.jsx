@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, PieChart, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,23 +23,23 @@ export default function Budget() {
 
   const { data: budgets = [], isLoading: loadingBudgets } = useQuery({
     queryKey: ["budgets"],
-    queryFn: () => base44.entities.Budget.list(),
+    queryFn: () => apiClient.entities.Budget.list(),
   });
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 1000),
+    queryFn: () => apiClient.entities.Transaction.list("-date", 1000),
   });
 
   const createMut = useMutation({
-    mutationFn: (d) => base44.entities.Budget.create(d),
+    mutationFn: (d) => apiClient.entities.Budget.create(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["budgets"] }); closeDialog(); },
   });
   const updateMut = useMutation({
-    mutationFn: ({ id, d }) => base44.entities.Budget.update(id, d),
+    mutationFn: ({ id, d }) => apiClient.entities.Budget.update(id, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["budgets"] }); closeDialog(); },
   });
   const deleteMut = useMutation({
-    mutationFn: (id) => base44.entities.Budget.delete(id),
+    mutationFn: (id) => apiClient.entities.Budget.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["budgets"] }),
   });
 

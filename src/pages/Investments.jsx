@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, TrendingUp, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,23 +26,23 @@ export default function Investments() {
 
   const { data: investments = [], isLoading } = useQuery({
     queryKey: ["investments"],
-    queryFn: () => base44.entities.Investment.list(),
+    queryFn: () => apiClient.entities.Investment.list(),
   });
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
-    queryFn: () => base44.entities.Account.list(),
+    queryFn: () => apiClient.entities.Account.list(),
   });
 
   const createMut = useMutation({
-    mutationFn: (d) => base44.entities.Investment.create({ ...d, gain_loss: d.current_value - d.cost_basis, gain_loss_pct: d.cost_basis > 0 ? ((d.current_value - d.cost_basis) / d.cost_basis) * 100 : 0 }),
+    mutationFn: (d) => apiClient.entities.Investment.create({ ...d, gain_loss: d.current_value - d.cost_basis, gain_loss_pct: d.cost_basis > 0 ? ((d.current_value - d.cost_basis) / d.cost_basis) * 100 : 0 }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["investments"] }); closeDialog(); },
   });
   const updateMut = useMutation({
-    mutationFn: ({ id, d }) => base44.entities.Investment.update(id, { ...d, gain_loss: d.current_value - d.cost_basis, gain_loss_pct: d.cost_basis > 0 ? ((d.current_value - d.cost_basis) / d.cost_basis) * 100 : 0 }),
+    mutationFn: ({ id, d }) => apiClient.entities.Investment.update(id, { ...d, gain_loss: d.current_value - d.cost_basis, gain_loss_pct: d.cost_basis > 0 ? ((d.current_value - d.cost_basis) / d.cost_basis) * 100 : 0 }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["investments"] }); closeDialog(); },
   });
   const deleteMut = useMutation({
-    mutationFn: (id) => base44.entities.Investment.delete(id),
+    mutationFn: (id) => apiClient.entities.Investment.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["investments"] }),
   });
 

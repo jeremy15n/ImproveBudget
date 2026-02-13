@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftRight } from "lucide-react";
 import PageHeader from "../components/shared/PageHeader";
@@ -17,15 +17,15 @@ export default function Transactions() {
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ["transactions"],
-    queryFn: () => base44.entities.Transaction.list("-date", 1000),
+    queryFn: () => apiClient.entities.Transaction.list("-date", 1000),
   });
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
-    queryFn: () => base44.entities.Account.list(),
+    queryFn: () => apiClient.entities.Account.list(),
   });
 
   const updateMut = useMutation({
-    mutationFn: ({ id, d }) => base44.entities.Transaction.update(id, d),
+    mutationFn: ({ id, d }) => apiClient.entities.Transaction.update(id, d),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["transactions"] }),
   });
 

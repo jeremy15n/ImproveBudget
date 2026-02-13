@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { base44 } from "@/api/base44Client";
+import { apiClient } from "@/api/apiClient";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -32,37 +32,22 @@ export default function CsvImporter({ accounts, onImportComplete }) {
     if (!file || !accountId) return;
     setStatus("uploading");
 
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    // TODO: Implement file upload endpoint
+    // const { file_url } = await apiClient.integrations.uploadFile({ file });
 
     setStatus("processing");
     const account = accounts.find(a => a.id === accountId);
 
-    const extracted = await base44.integrations.Core.ExtractDataFromUploadedFile({
-      file_url,
-      json_schema: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            date: { type: "string", description: "Transaction date in YYYY-MM-DD format" },
-            merchant_raw: { type: "string", description: "Original merchant/description text" },
-            amount: { type: "number", description: "Transaction amount. Negative for expenses/debits, positive for income/credits" },
-            category: { type: "string", description: "Best guess category" },
-          }
-        }
-      }
-    });
-
-    if (extracted.status === "error") {
-      setStatus("error");
-      setResults({ error: extracted.details });
-      return;
-    }
-
-    const rows = Array.isArray(extracted.output) ? extracted.output : [];
+    // TODO: Implement file extraction endpoint
+    // const extracted = await apiClient.integrations.extractData({...});
+    
+    // For now, return error until these endpoints are implemented
+    setStatus("error");
+    setResults({ error: "File upload and extraction endpoints not yet implemented. Please implement /api/upload and /api/extract endpoints." });
+    return;
 
     // Fetch existing hashes to detect duplicates
-    const existingTx = await base44.entities.Transaction.filter({ account_id: accountId }, "-date", 500);
+    const existingTx = await apiClient.entities.Transaction.filter({ account_id: accountId }, "-date", 500);
     const existingHashes = new Set(existingTx.map(t => t.import_hash).filter(Boolean));
 
     let imported = 0;
@@ -99,7 +84,7 @@ export default function CsvImporter({ accounts, onImportComplete }) {
     if (batch.length > 0) {
       // Bulk create in chunks of 50
       for (let i = 0; i < batch.length; i += 50) {
-        await base44.entities.Transaction.bulkCreate(batch.slice(i, i + 50));
+        await apiClient.entities.Transaction.bulkCreate(batch.slice(i, i + 50));
       }
     }
 

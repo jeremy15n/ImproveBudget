@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Settings, Pencil, Trash2, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,19 +27,19 @@ export default function Rules() {
 
   const { data: rules = [] } = useQuery({
     queryKey: ["rules"],
-    queryFn: () => base44.entities.CategoryRule.list("-priority"),
+    queryFn: () => apiClient.entities.CategoryRule.list("-priority"),
   });
 
   const createMut = useMutation({
-    mutationFn: (d) => base44.entities.CategoryRule.create(d),
+    mutationFn: (d) => apiClient.entities.CategoryRule.create(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["rules"] }); closeDialog(); },
   });
   const updateMut = useMutation({
-    mutationFn: ({ id, d }) => base44.entities.CategoryRule.update(id, d),
+    mutationFn: ({ id, d }) => apiClient.entities.CategoryRule.update(id, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["rules"] }); closeDialog(); },
   });
   const deleteMut = useMutation({
-    mutationFn: (id) => base44.entities.CategoryRule.delete(id),
+    mutationFn: (id) => apiClient.entities.CategoryRule.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["rules"] }),
   });
 
@@ -47,7 +47,7 @@ export default function Rules() {
 
   const runRules = async () => {
     setRunning(true);
-    const transactions = await base44.entities.Transaction.filter({ category: "uncategorized" }, "-date", 500);
+    const transactions = await apiClient.entities.Transaction.filter({ category: "uncategorized" }, "-date", 500);
     let matched = 0;
 
     for (const tx of transactions) {
@@ -63,7 +63,7 @@ export default function Rules() {
         if (isMatch) {
           const update = { category: rule.category };
           if (rule.merchant_clean_name) update.merchant_clean = rule.merchant_clean_name;
-          await base44.entities.Transaction.update(tx.id, update);
+          await apiClient.entities.Transaction.update(tx.id, update);
           matched++;
           break;
         }

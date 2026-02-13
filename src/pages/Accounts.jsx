@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Wallet, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,19 +26,19 @@ export default function Accounts() {
 
   const { data: accounts = [], isLoading } = useQuery({
     queryKey: ["accounts"],
-    queryFn: () => base44.entities.Account.list(),
+    queryFn: () => apiClient.entities.Account.list(),
   });
 
   const createMut = useMutation({
-    mutationFn: (d) => base44.entities.Account.create(d),
+    mutationFn: (d) => apiClient.entities.Account.create(d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["accounts"] }); closeDialog(); },
   });
   const updateMut = useMutation({
-    mutationFn: ({ id, d }) => base44.entities.Account.update(id, d),
+    mutationFn: ({ id, d }) => apiClient.entities.Account.update(id, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["accounts"] }); closeDialog(); },
   });
   const deleteMut = useMutation({
-    mutationFn: (id) => base44.entities.Account.delete(id),
+    mutationFn: (id) => apiClient.entities.Account.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["accounts"] }),
   });
 
