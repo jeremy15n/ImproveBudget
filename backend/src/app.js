@@ -4,6 +4,9 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 import entityRoutes from './routes/entity.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
+import investmentRoutes from './routes/investment.routes.js';
+import accountRoutes from './routes/account.routes.js';
+import reportRoutes from './routes/report.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,6 +32,9 @@ app.get('/health', (req, res) => {
 // API routes - upload routes must be registered first to avoid
 // being caught by the generic /:entity pattern in entity routes
 app.use('/api', uploadRoutes);
+app.use('/api/investments', investmentRoutes);
+app.use('/api/accounts', accountRoutes);
+app.use('/api/reports', reportRoutes);
 app.use('/api', entityRoutes);
 
 // Serve frontend in production (when built frontend is available)

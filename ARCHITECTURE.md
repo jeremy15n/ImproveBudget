@@ -1,85 +1,61 @@
-# ImproveBudget Architecture
+# BetterBudget Architecture
 
-This document describes the technical architecture of the ImproveBudget application.
+Technical architecture of the BetterBudget application.
 
 ## Overview
 
-ImproveBudget is a full-stack personal finance application with a React frontend and Node.js/Express backend. It's designed to be completely local and portable, with no external service dependencies.
+Full-stack personal finance app with a React frontend and Node.js/Express backend. Fully local — no external service dependencies (except optional live investment price refresh).
 
 ```
-┌─────────────────────────────────────────────────┐
-│          Browser (http://localhost:5173)        │
-│                                                 │
-│  ┌───────────────────────────────────────────┐  │
-│  │        React SPA (Vite)                   │  │
-│  │                                           │  │
-│  │  Pages → Components → TanStack Query     │  │
-│  │         ↓           ↓                     │  │
-│  │      Tailwind CSS   apiClient.js         │  │
-│  └───────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────┘
-           ↓ HTTP/REST (CORS)
-    ┌──────────────────────────────────────────┐
-    │  Node.js/Express (localhost:8000)        │
-    │                                          │
-    │  ┌──────────────────────────────────┐   │
-    │  │  Routes                           │   │
-    │  │  ↓                                │   │
-    │  │  Controllers                      │   │
-    │  │  ├─ Entity CRUD                   │   │
-    │  │  └─ File Upload/Import            │   │
-    │  │  ↓                                │   │
-    │  │  Services                         │   │
-    │  │  ├─ Database Service              │   │
-    │  │  ├─ CSV Service                   │   │
-    │  │  └─ Categorization Service        │   │
-    │  │  ↓                                │   │
-    │  │  Database                         │   │
-    │  │  └─ SQLite (sql.js)               │   │
-    │  └──────────────────────────────────┘   │
-    │                                          │
-    │  File: budget.db                        │
-    └──────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│           Browser (http://localhost:5173)         │
+│                                                   │
+│  ┌─────────────────────────────────────────────┐  │
+│  │         React SPA (Vite)                    │  │
+│  │                                             │  │
+│  │  Pages → Components → TanStack Query        │  │
+│  │                        ↓                    │  │
+│  │                   apiClient.js              │  │
+│  └─────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────┘
+          ↓ HTTP/REST (CORS)
+   ┌───────────────────────────────────────────┐
+   │  Node.js/Express (localhost:8000)          │
+   │                                            │
+   │  Routes → Controllers → Services           │
+   │    ├─ Entity CRUD (generic)                │
+   │    ├─ Reports (cash flow aggregation)      │
+   │    ├─ Investments (live price refresh)     │
+   │    ├─ Accounts (balance sync)              │
+   │    └─ File Upload/Import                   │
+   │               ↓                            │
+   │  SQLite (sql.js, in-memory + disk sync)    │
+   │  File: backend/data/budget.db              │
+   └────────────────────────────────────────────┘
 ```
 
 ## Tech Stack
 
 ### Frontend
 
-**Framework & Build:**
-- **React 18** - Component-based UI framework
-- **Vite 6** - Fast build tool with HMR (Hot Module Replacement)
-- **React Router v6** - Client-side routing
-
-**State & Data Management:**
-- **TanStack Query (React Query)** - Server state management and caching
-- **React Hook Form** - Form state management
-- **Zod** - Schema validation
-
-**UI & Styling:**
-- **Tailwind CSS** - Utility-first CSS framework
-- **shadcn/ui** - Accessible component library (Radix UI primitives)
-- **Lucide React** - Icon library
-
-**Other:**
-- **Framer Motion** - Animation library
-- **date-fns** - Date manipulation
-- **Recharts** - Data visualization
+- **React 18** — Component-based UI
+- **Vite** — Build tool with HMR
+- **React Router v6** — Client-side routing (auto-generated from `pages.config.js`)
+- **TanStack Query** — Server state management and caching
+- **Tailwind CSS** — Utility-first styling
+- **shadcn/ui** — Accessible component library (Radix UI primitives)
+- **Recharts** — Charts (bar, pie, area)
+- **Lucide React** — Icons
+- **Moment.js** — Date formatting
+- **ReactMarkdown** — Markdown rendering (Documentation page)
 
 ### Backend
 
-**Framework & Server:**
-- **Node.js 18+** - JavaScript runtime
-- **Express 4** - Web framework
-- **CORS** - Cross-origin resource sharing
-
-**Database:**
-- **SQLite 3** - Lightweight, file-based database
-- **sql.js** - Pure JavaScript SQLite implementation (no native compilation required)
-
-**Data Processing:**
-- **papaparse** - CSV parser with auto-detection
-- **multer** - File upload middleware
+- **Node.js 18+** — JavaScript runtime
+- **Express** — Web framework
+- **sql.js** — Pure JavaScript SQLite (no native compilation)
+- **papaparse** — CSV parsing with auto-detection
+- **multer** — File upload middleware
 
 ## Frontend Architecture
 
@@ -87,75 +63,92 @@ ImproveBudget is a full-stack personal finance application with a React frontend
 
 ```
 src/
-├── main.jsx                    # Entry point
-├── pages/                      # Page components
-│   ├── Dashboard.jsx
-│   ├── Transactions.jsx
-│   ├── Accounts.jsx
-│   ├── Budget.jsx
-│   ├── Investments.jsx
-│   ├── Goals.jsx
-│   ├── Import.jsx
-│   └── ...
-├── components/                 # Reusable components
-│   ├── ui/                     # shadcn/ui components
-│   │   ├── button.jsx
-│   │   ├── input.jsx
-│   │   ├── card.jsx
-│   │   └── ...
-│   ├── dashboard/              # Feature-specific components
-│   ├── transactions/
-│   ├── accounts/
-│   ├── shared/
-│   └── import/
-├── api/                        # API client layer
-│   └── apiClient.js           # Generic REST API client
-├── lib/                        # Utilities
-│   ├── query-client.js        # TanStack Query config
-│   ├── AuthContext.jsx        # Auth state
-│   ├── app-params.js          # App configuration
-│   └── ...
-└── hooks/                      # Custom React hooks
+├── main.jsx                     # Entry point
+├── App.jsx                      # Router setup
+├── Layout.jsx                   # App shell with sidebar navigation
+├── pages.config.js              # Auto-generated page routing
+├── pages/
+│   ├── Dashboard.jsx            # Overview with global date filter
+│   ├── Transactions.jsx         # Paginated transaction list with bulk actions
+│   ├── Accounts.jsx             # Account management
+│   ├── Budget.jsx               # Budget tracking with month navigation
+│   ├── Investments.jsx          # Portfolio tracking
+│   ├── NetWorth.jsx             # Net worth tracking + projections
+│   ├── Goals.jsx                # Financial goals
+│   ├── Import.jsx               # CSV import
+│   ├── Rules.jsx                # Auto-categorization rules
+│   ├── Settings.jsx             # Category management
+│   └── Documentation.jsx        # In-app help
+├── components/
+│   ├── ui/                      # shadcn/ui base components
+│   ├── shared/                  # PageHeader, StatCard, EmptyState, formatters
+│   ├── transactions/            # TransactionRow, TransactionEditDialog, TransactionFilters
+│   ├── dashboard/               # CashFlowChart, CategoryBreakdown, IncomeBreakdown,
+│   │                            #   RecentTransactions, AccountsSummary
+│   ├── networth/                # NetWorthProjector
+│   └── import/                  # Import flow components
+├── hooks/
+│   └── useCategories.js         # Dynamic categories from API
+├── api/
+│   └── apiClient.js             # Generic REST client with Entity pattern
+└── lib/
+    ├── query-client.js          # TanStack Query configuration
+    └── utils.js                 # Utility functions
 ```
 
 ### Data Flow
 
-1. **User Interaction** → Component event handler
-2. **API Call** → `apiClient.entities.{Entity}.{method}()`
-3. **HTTP Request** → Express backend on `localhost:8000/api`
-4. **TanStack Query** → Caches response, manages state
+1. **User interaction** → Component event handler
+2. **API call** → `apiClient.entities.{Entity}.{method}()`
+3. **HTTP request** → Express backend on `localhost:8000/api`
+4. **TanStack Query** → Caches response, manages loading/error states
 5. **Re-render** → Component displays updated data
-
-### Example: Fetching Transactions
-
-```javascript
-// Component
-import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/api/apiClient';
-
-function Transactions() {
-  const { data: transactions, isLoading } = useQuery({
-    queryKey: ['transactions'],
-    queryFn: () => apiClient.entities.Transaction.list('-date', 100)
-  });
-
-  // Render transactions...
-}
-```
 
 ### API Client Pattern
 
-The `apiClient` in `src/api/apiClient.js` provides a generic Entity-based interface:
+The `apiClient` provides a generic Entity-based interface for all CRUD operations:
 
 ```javascript
-// Available methods on each entity
+// Standard CRUD
 apiClient.entities.Transaction.list(sortField, limit)
 apiClient.entities.Transaction.filter(conditions, sortField, limit)
 apiClient.entities.Transaction.create(data)
 apiClient.entities.Transaction.update(id, data)
 apiClient.entities.Transaction.delete(id)
+
+// Bulk operations
 apiClient.entities.Transaction.bulkCreate(items)
+apiClient.entities.Transaction.bulkUpdate(ids, data)
+apiClient.entities.Transaction.bulkDelete(ids)
+
+// Paginated (returns { data, meta })
+apiClient.entities.Transaction.listPaginated({ page, limit, sort_by, sort_order, ...filters })
+
+// Reports (non-entity)
+apiClient.getCashFlow(startDate, endDate, interval)
+apiClient.getReportYears()
+apiClient.refreshInvestmentPrices()
+apiClient.getQuote(symbol)
 ```
+
+### Dynamic Categories
+
+Categories are stored in the database and served via the API. The `useCategories()` hook provides:
+
+```javascript
+const { categoryList, categoryColors, getCategoryLabel, isLoading } = useCategories();
+```
+
+Falls back to hardcoded defaults if the API is unavailable. Default categories are seeded on database initialization.
+
+### Dashboard Architecture
+
+The Dashboard page owns a global date filter (This Month / Last Month / YTD / Specific Year) that drives:
+- **Stat cards** — Income, Expenses, Savings Rate (from cash flow report)
+- **Net Worth** — Live calculation from active accounts (assets - liabilities)
+- **Cash Flow chart** — 3-bar chart (income, expenses, savings) from report API
+- **Category breakdowns** — Pie charts filtered by the selected date range
+- **Recent transactions** — Latest 200 transactions
 
 ## Backend Architecture
 
@@ -164,305 +157,131 @@ apiClient.entities.Transaction.bulkCreate(items)
 ```
 backend/
 ├── src/
-│   ├── server.js               # Entry point
-│   ├── app.js                  # Express config
+│   ├── server.js                # Entry point (port binding)
+│   ├── app.js                   # Express config, middleware, route registration
 │   ├── config/
-│   │   └── database.js         # Database connection
-│   ├── db/
-│   │   ├── schema.sql          # Database schema
-│   │   └── migrations/         # Future migrations
+│   │   └── database.js          # DB init, schema, migrations, category seeding
 │   ├── routes/
-│   │   ├── index.js            # Route aggregator
-│   │   ├── entity.routes.js    # Generic CRUD routes
-│   │   └── upload.routes.js    # File upload routes
+│   │   ├── entity.routes.js     # Generic CRUD + bulk routes (/:entity pattern)
+│   │   ├── upload.routes.js     # File upload + import routes
+│   │   ├── report.routes.js     # Cash flow + available years
+│   │   ├── investment.routes.js # Price refresh + quote
+│   │   └── account.routes.js    # Balance sync
 │   ├── controllers/
-│   │   ├── entity.controller.js # CRUD logic
-│   │   └── upload.controller.js # Upload/import logic
+│   │   ├── entity.controller.js # Generic CRUD + bulk operations
+│   │   └── upload.controller.js # Upload, extract, import logic
 │   ├── services/
-│   │   ├── database.service.js # Database operations
-│   │   └── csv.service.js      # CSV parsing
+│   │   ├── database.service.js  # Generic DB operations (list, create, update, delete, bulk)
+│   │   ├── csv.service.js       # CSV parsing + bank format auto-detection
+│   │   ├── report.service.js    # Cash flow aggregation queries
+│   │   ├── marketData.service.js # Live stock/ETF price fetching
+│   │   └── account.service.js   # Account balance sync from investments
 │   └── middleware/
-│       ├── errorHandler.js     # Error handling
-│       └── cors.js             # CORS config
+│       ├── errorHandler.js      # Global error handler
+│       └── cors.js              # CORS configuration
 ├── data/
-│   └── budget.db               # SQLite database (auto-created)
-├── uploads/                    # Temporary upload directory
-└── package.json
+│   └── budget.db                # SQLite database (auto-created)
+└── uploads/                     # Temporary upload directory
 ```
 
-### Request Flow
+### Route Registration Order
 
-```
-Request → Express Middleware (CORS, JSON parsing)
-  ↓
-Route Matching (entity.routes.js)
-  ↓
-Entity Validation Middleware
-  ↓
-Controller (entity.controller.js)
-  ↓
-Service Layer (database.service.js)
-  ↓
-Database (SQLite)
-  ↓
-Response → Error Handler (if error) → JSON Response
+Routes are registered in `app.js` in a specific order because the generic `/:entity` pattern would otherwise catch everything:
+
+```javascript
+app.use('/api', uploadRoutes);           // /api/upload, /api/extract, /api/import
+app.use('/api/investments', investmentRoutes); // /api/investments/refresh, /quote/:symbol
+app.use('/api/accounts', accountRoutes);      // /api/accounts/sync-balances
+app.use('/api/reports', reportRoutes);        // /api/reports/cash-flow, /years
+app.use('/api', entityRoutes);               // /api/:entity (must be last)
 ```
 
 ### Database Service
 
-The `DatabaseService` in `backend/src/services/database.service.js` provides generic CRUD operations:
+Generic CRUD operations for all entity types:
 
 ```javascript
-// Available methods
 dbService.list(table, filters, sort, limit)
 dbService.getById(table, id)
 dbService.create(table, data)
-dbService.bulkCreate(table, items)
 dbService.update(table, id, data)
 dbService.delete(table, id)
-dbService.raw(sql, params)  // For complex queries
+dbService.bulkCreate(table, items)
+dbService.bulkUpdate(table, ids, data)
+dbService.bulkDelete(table, ids)
+dbService.raw(sql, params)
 ```
 
-**Key Features:**
+Features:
 - Parameterized queries (SQL injection prevention)
-- Dynamic WHERE clause building
-- Support for operators: `_gte`, `_lte`, `_like`
-- Automatic timestamp management (`created_at`, `updated_at`)
+- Dynamic WHERE clause building with operators: `=`, `_gte`, `_lte`, `_like`, `search`
+- Opt-in pagination (when `page` param present, returns `{ data, meta }`)
+- Automatic `updated_at` timestamp management
+- Entity name → table name mapping
+
+### Report Service
+
+Handles aggregated queries that don't fit the generic CRUD pattern:
+
+- **Cash Flow** — Groups transactions by month or year, aggregates into 3 buckets:
+  - `income` — Positive amounts (excluding savings type)
+  - `expenses` — Negative amounts (excluding savings type)
+  - `savings` — Transactions with type "savings" (absolute value)
+  - Transfers are excluded entirely
+- **Available Years** — Returns distinct years that have transaction data
 
 ### CSV Import Pipeline
 
 ```
-Upload File
-  ↓
-Store in Memory
-  ↓
-Parse CSV (papaparse)
-  ↓
-Detect Bank Format
-  ↓
-Extract Transactions
-  ↓
-Generate Import Hashes
-  ↓
-Check for Duplicates
-  ↓
-Bulk Insert
-  ↓
-Return Results
+Upload CSV → papaparse → Auto-detect bank format → Normalize transactions
+  → Generate import hashes (date|amount|merchant) → Deduplicate → Bulk insert
 ```
 
-**Supported Formats:** AMEX, USAA, PayPal, Abound, Fidelity, Schwab
+Supported formats: AMEX, USAA, Abound Credit Union, PayPal Savings, Fidelity, Schwab.
 
-**Duplicate Detection:**
-- Uses `import_hash` field on transactions
-- Hash is generated from: `date|amount|merchant_raw`
-- Same algorithm used in frontend and backend for consistency
+### Database Initialization
+
+On startup (`backend/src/config/database.js`):
+1. Load or create SQLite database file via sql.js
+2. Run schema creation (all tables + indexes)
+3. Run migrations (schema changes)
+4. Sync default categories (seed/update defaults, preserve user-created)
+5. Save to disk
 
 ## Database Schema
 
-### Core Tables
+### Tables
 
-**accounts** - Financial accounts
-- Fields: name, institution, account_type, balance, is_active
-- Indexes: is_active, institution
-
-**transactions** - Individual transactions
-- Fields: date, merchant_raw, merchant_clean, amount, category, account_id, type, flags, notes, import_hash
-- Unique: import_hash (for duplicate detection)
-- Indexes: date, account_id, category, import_hash
-
-**budgets** - Monthly budget limits
-- Fields: category, monthly_limit, month, is_active, rollover
-- Unique: category + month
-
-**categoryrules** - Auto-categorization rules
-- Fields: match_pattern, match_type, category, priority, is_active
-- Indexes: is_active, priority
-
-**financialgoals** - Financial goals
-- Fields: name, target_amount, current_amount, target_date, category, is_active
-
-**investments** - Investment holdings
-- Fields: symbol, name, account_id, asset_class, shares, current_value, gain_loss
-
-**networthsnapshots** - Historical net worth
-- Fields: date, total_assets, total_liabilities, net_worth, month
-- Indexes: date, month
-
-All tables include `created_at` and `updated_at` timestamps.
+| Table | Key Fields | Notes |
+|-------|-----------|-------|
+| `accounts` | name, institution, account_type, balance, is_asset, is_active | Asset/liability flag for net worth |
+| `transactions` | date, merchant_raw, merchant_clean, amount, category, account_id, type, import_hash | Types: income, expense, savings, transfer, refund |
+| `budgets` | category, monthly_limit, month, is_active, rollover | Unique on category + month |
+| `categories` | name, label, color, is_default, sort_order | Seeded with ~40 defaults |
+| `categoryrules` | match_pattern, match_type, category, merchant_clean_name, priority | Contains/starts_with/exact matching |
+| `investments` | symbol, name, account_id, asset_class, shares, current_value, gain_loss | Linked to accounts |
+| `networthsnapshots` | date, total_assets, total_liabilities, net_worth, accounts_breakdown, month | Point-in-time snapshots |
+| `financialgoals` | name, target_amount, current_amount, target_date, category, is_active | Progress tracking |
 
 ### Relationships
 
-- **transactions.account_id** → **accounts.id** (ON DELETE SET NULL)
-- **investments.account_id** → **accounts.id** (ON DELETE SET NULL)
+- `transactions.account_id` → `accounts.id` (ON DELETE SET NULL)
+- `investments.account_id` → `accounts.id` (ON DELETE SET NULL)
 
-## Security Considerations
+## Security
 
-### SQL Injection Prevention
-- All queries use parameterized statements
-- No string concatenation in SQL queries
-- User input validated before database operations
+- **SQL injection prevention** — All queries use parameterized statements
+- **File upload validation** — CSV/Excel only, 10MB size limit, in-memory with auto-cleanup
+- **CORS** — Configured for localhost in development
+- **Local-only data** — All data in `budget.db`, no external network calls (except opt-in investment price refresh)
+- **No credentials stored** — App uses exported CSV files, not bank login credentials
 
-### File Upload Security
-- File type validation (only CSV/Excel)
-- File size limit (10MB default)
-- Files stored in memory, auto-deleted after 1 hour
-- No execution of uploaded content
+## Performance
 
-### CORS
-- Only allows requests from localhost (development) or configured domain (production)
-- Credentials not sent cross-origin
-
-### Future: Authentication
-- Planned but not implemented
-- Will use JWT tokens in Authorization header
-- Stored securely (httpOnly cookies recommended)
-
-## Performance Optimizations
-
-### Frontend
-- **Code Splitting:** Routes lazy-loaded via React Router
-- **Image Optimization:** Lucide icons are SVG (small footprint)
-- **Caching:** TanStack Query caches queries
-- **Bundling:** Vite provides tree-shaking and code splitting
-
-### Backend
-- **Indexing:** Strategic indexes on frequently queried fields
-- **In-Memory Files:** Uploaded files stored in memory temporarily
-- **Prepared Statements:** Reused across requests
-- **File-Based Persistence:** sql.js with automatic disk synchronization after writes
-
-## Environment
-
-### Development
-```
-Frontend: http://localhost:5173
-Backend:  http://localhost:8000/api
-Database: ./backend/data/budget.db (auto-created)
-```
-
-### Production
-```
-Frontend: Built to /dist, served from backend
-Backend:  Configurable port (default 8000)
-Database: Configurable path (default ./data/budget.db)
-```
-
-## Data Models
-
-All data models are defined in the `entities/` folder as JSON schemas:
-
-```javascript
-// entities/Transaction.js
-{
-  name: "Transaction",
-  type: "object",
-  properties: { ... },
-  required: ["date", "amount"]
-}
-```
-
-These schemas are used for:
-1. Frontend validation (React Hook Form + Zod)
-2. Backend type hints (JSDoc comments)
-3. Database schema generation (reflected in schema.sql)
-
-## Deployment Considerations
-
-### Single File Database
-- SQLite database is a single file (`budget.db`)
-- Easy to backup and restore
-- No database server needed
-
-### Portability
-- Works on Windows, Mac, Linux
-- No system dependencies (except Node.js)
-- All configuration via `.env` files
-
-### Scaling Limitations
-- SQLite is single-threaded
-- Not suitable for high-concurrency applications
-- Recommended for personal use (single user or small team)
-
-### Future: Scaling
-To scale beyond single-user:
-1. Migrate to PostgreSQL/MySQL
-2. Implement connection pooling
-3. Add database migrations system
-4. Implement authentication/authorization
-5. Add activity logging and audit trail
-
-## Monitoring & Debugging
-
-### Backend Logging
-```javascript
-// Server logs requests and errors
-console.log('✓ Server running on http://localhost:8000');
-console.log('Error:', errorMessage);
-```
-
-### Frontend DevTools
-- React Developer Tools
-- Redux DevTools (for TanStack Query inspection)
-- Browser Network tab for API calls
-
-### Database Inspection
-```bash
-# Open database in SQLite CLI
-sqlite3 backend/data/budget.db
-
-# Common queries
-SELECT name FROM sqlite_master WHERE type='table';
-SELECT COUNT(*) FROM transactions;
-SELECT * FROM transactions ORDER BY date DESC LIMIT 10;
-```
-
-## Testing Strategy
-
-### Frontend Testing (Not Yet Implemented)
-- Unit tests: Components and hooks
-- Integration tests: Page-level interactions
-- E2E tests: Full user workflows
-
-### Backend Testing (Not Yet Implemented)
-- Unit tests: Service layer
-- Integration tests: API endpoints
-- Load tests: Database performance
-
-### Manual Testing
-- Import CSV files from sample banks
-- Verify duplicate detection
-- Test filtering and sorting
-- Check responsive design on mobile
-
-## Future Enhancements
-
-1. **Authentication & Multi-User**
-   - User registration/login
-   - Role-based access control
-   - Data isolation per user
-
-2. **Real-Time Sync**
-   - WebSocket for live updates
-   - Conflict resolution
-   - Offline-first with sync
-
-3. **Advanced Features**
-   - Plaid integration for auto-sync
-   - Machine learning for categorization
-   - Bill reminders and alerts
-   - Recurring transaction detection
-
-4. **Performance**
-   - Database query optimization
-   - Caching layer (Redis)
-   - Pagination for large datasets
-
-5. **Mobile App**
-   - React Native implementation
-   - Offline support
-   - Push notifications
+- **Frontend:** TanStack Query caches responses; categories cached for 1 minute; Vite tree-shaking and code splitting
+- **Backend:** Strategic indexes on date, account_id, category, import_hash; sql.js operates in-memory with periodic disk sync; bulk operations use database transactions
+- **Pagination:** Server-side pagination for transactions prevents loading entire dataset
 
 ---
 
-For more details, see [README.md](README.md) and [backend/API.md](backend/API.md).
+For API details, see [backend/API.md](backend/API.md). For setup, see [README.md](README.md).

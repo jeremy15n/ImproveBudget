@@ -1,319 +1,253 @@
-# ImproveBudget API Documentation
+# BetterBudget API Documentation
 
 ## Overview
 
-The ImproveBudget API is a RESTful API built with Node.js/Express that provides a complete interface for managing personal finances. All data is stored locally in a SQLite database file.
+RESTful API built with Node.js/Express for managing personal finances. All data is stored locally in SQLite.
 
 **Base URL:** `http://localhost:8000/api`
-**Database Location:** `backend/data/budget.db` (auto-created on first run)
-**Technology:** Node.js, Express, SQLite (sql.js)
-
-## Table of Contents
-
-- [Authentication](#authentication)
-- [Response Format](#response-format)
-- [Error Handling](#error-handling)
-- [Entity Endpoints](#entity-endpoints)
-- [File Upload](#file-upload)
-- [Query Parameters](#query-parameters)
-- [Examples](#examples)
-
-## Authentication
-
-*Note: Authentication is not yet implemented. All endpoints are currently open.*
-
-Future implementations will use JWT tokens passed in the Authorization header:
-```
-Authorization: Bearer <token>
-```
+**Database:** `backend/data/budget.db` (auto-created on first run)
 
 ## Response Format
 
-All successful responses return a JSON object or array:
+### Success
+```json
+{ "id": 1, "date": "2025-01-15", "amount": -45.32, ... }
+```
 
-### Success Response
+### Paginated Success (when `page` param is used)
 ```json
 {
-  "id": 1,
-  "date": "2025-01-15",
-  "merchant_raw": "Whole Foods",
-  "amount": -45.32,
-  "category": "groceries",
-  "account_id": 1,
-  ...
+  "data": [ { "id": 1, ... }, ... ],
+  "meta": { "total": 150, "page": 1, "limit": 50, "totalPages": 3 }
 }
 ```
 
-### Error Response
+### Error
 ```json
-{
-  "error": true,
-  "message": "Human-readable error message",
-  "detail": "Additional details (in development mode)"
-}
+{ "error": true, "message": "Human-readable error message" }
 ```
 
 ### HTTP Status Codes
-- `200` - OK (successful GET, PUT)
-- `201` - Created (successful POST)
-- `400` - Bad Request (validation error)
-- `404` - Not Found (resource doesn't exist)
-- `500` - Internal Server Error
+- `200` — OK (GET, PUT)
+- `201` — Created (POST)
+- `400` — Bad Request (validation error)
+- `404` — Not Found
+- `500` — Internal Server Error
 
-## Error Handling
-
-Common error scenarios:
-
-### Validation Error (400)
-```json
-{
-  "error": true,
-  "message": "Request body is required"
-}
-```
-
-### Not Found (404)
-```json
-{
-  "error": true,
-  "message": "transaction not found",
-  "id": 999
-}
-```
-
-### Duplicate Entry (400)
-```json
-{
-  "error": true,
-  "message": "Duplicate entry",
-  "detail": "A record with this value already exists"
-}
-```
-
-### Invalid Reference (400)
-```json
-{
-  "error": true,
-  "message": "Invalid reference",
-  "detail": "Referenced record does not exist"
-}
-```
+---
 
 ## Entity Endpoints
 
-All entities follow the same RESTful pattern. The following entities are available:
+All entities follow the same RESTful pattern:
 
-- `transaction` - Individual transactions
-- `account` - Financial accounts
-- `budget` - Monthly budgets
-- `categoryrule` - Auto-categorization rules
-- `financialgoal` - Financial goals
-- `investment` - Investment holdings
-- `networthsnapshot` - Net worth snapshots
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/{entity}` | List/filter entities |
+| GET | `/api/{entity}/{id}` | Get single entity |
+| POST | `/api/{entity}` | Create entity |
+| POST | `/api/{entity}/bulk` | Bulk create |
+| PUT | `/api/{entity}/{id}` | Update entity |
+| PUT | `/api/{entity}/bulk-update` | Bulk update by IDs |
+| DELETE | `/api/{entity}/{id}` | Delete entity |
+| POST | `/api/{entity}/bulk-delete` | Bulk delete by IDs |
 
-### List Entities
+### Supported Entities
+
+| Entity | Table | Description |
+|--------|-------|-------------|
+| `transaction` | transactions | Individual transactions (types: income, expense, savings, transfer, refund) |
+| `account` | accounts | Financial accounts (checking, savings, credit, brokerage, retirement) |
+| `budget` | budgets | Monthly spending limits by category |
+| `category` | categories | Customizable spending categories with colors |
+| `categoryrule` | categoryrules | Auto-categorization rules (pattern matching) |
+| `financialgoal` | financialgoals | Financial goals with progress tracking |
+| `investment` | investments | Investment holdings (stocks, ETFs, bonds) |
+| `networthsnapshot` | networthsnapshots | Point-in-time net worth history |
+
+---
+
+## Query Parameters
+
+### Pagination (opt-in)
+
+When `page` is included, the response switches from a plain array to `{ data, meta }`.
+
+| Param | Description |
+|-------|-------------|
+| `page` | Page number (1-based). Enables paginated response. |
+| `limit` | Items per page (default 50, max 500) |
 
 ```
-GET /api/{entity}
+GET /api/transaction?page=1&limit=50&sort_by=date&sort_order=desc
 ```
 
-Returns an array of entities with optional filtering and sorting.
-
-**Query Parameters:**
-- `sort_by` - Field name to sort by
-- `sort_order` - Sort direction: `asc` or `desc` (default: `asc`)
-- `limit` - Maximum number of records to return
-- `{field}` - Filter by field equality (e.g., `category=groceries`)
-- `{field}_gte` - Filter by field >= value (e.g., `amount_gte=100`)
-- `{field}_lte` - Filter by field <= value (e.g., `amount_lte=100`)
-- `{field}_like` - Filter by field LIKE value (e.g., `merchant_raw_like=%amazon%`)
-
-**Example:**
-```bash
-GET /api/transaction?sort_by=date&sort_order=desc&limit=50&category=groceries
+**Response:**
+```json
+{
+  "data": [ ... ],
+  "meta": { "total": 342, "page": 1, "limit": 50, "totalPages": 7 }
+}
 ```
 
-**Response (200):**
+Without `page`, the response is a plain array (backwards compatible).
+
+### Sorting
+
+| Param | Description |
+|-------|-------------|
+| `sort_by` | Field name to sort by |
+| `sort_order` | `asc` (default) or `desc` |
+
+### Filtering
+
+| Pattern | Description | Example |
+|---------|-------------|---------|
+| `{field}=value` | Exact match | `category=groceries` |
+| `{field}_gte=value` | Greater than or equal | `date_gte=2025-01-01` |
+| `{field}_lte=value` | Less than or equal | `date_lte=2025-01-31` |
+| `{field}_like=value` | LIKE match (auto-wraps with %) | `merchant_raw_like=amazon` |
+| `search=value` | Multi-field text search (merchant_raw, merchant_clean, notes) | `search=whole foods` |
+
+### Limiting (non-paginated mode)
+
+```
+GET /api/transaction?limit=50
+```
+
+---
+
+## Bulk Operations
+
+### Bulk Update
+
+```
+PUT /api/{entity}/bulk-update
+```
+
+**Body:**
+```json
+{ "ids": [1, 2, 3], "data": { "category": "groceries" } }
+```
+
+**Response:**
+```json
+{ "updated": 3 }
+```
+
+### Bulk Delete
+
+```
+POST /api/{entity}/bulk-delete
+```
+
+**Body:**
+```json
+{ "ids": [1, 2, 3] }
+```
+
+**Response:**
+```json
+{ "deleted": 3 }
+```
+
+---
+
+## Report Endpoints
+
+### Cash Flow
+
+```
+GET /api/reports/cash-flow
+```
+
+Aggregated income, expenses, and savings grouped by time interval within a date range.
+
+| Param | Description |
+|-------|-------------|
+| `startDate` | Start date `YYYY-MM-DD` (e.g., `2025-01-01`) |
+| `endDate` | End date `YYYY-MM-DD` (e.g., `2025-12-31`) |
+| `interval` | `month` (default) or `year` |
+
+Transactions with `type='transfer'` are excluded. Transactions with `type='savings'` are aggregated into a separate `savings` bucket.
+
+**Monthly example:** `GET /api/reports/cash-flow?startDate=2025-01-01&endDate=2025-12-31&interval=month`
+
+**Response:**
 ```json
 [
-  {
-    "id": 1,
-    "date": "2025-01-15",
-    "merchant_raw": "Whole Foods",
-    "merchant_clean": "Whole Foods",
-    "amount": -45.32,
-    "category": "groceries",
-    "account_id": 1,
-    "account_name": "Chase Checking",
-    "type": "expense",
-    "is_reviewed": false,
-    "is_flagged": false,
-    "created_at": "2025-01-15T10:30:00Z",
-    "updated_at": "2025-01-15T10:30:00Z"
-  }
+  { "period": "2025-01", "label": "2025-01", "income": 5200, "expenses": 3100, "savings": 500, "net": 1600 },
+  { "period": "2025-02", "label": "2025-02", "income": 5200, "expenses": 2800, "savings": 600, "net": 1800 }
 ]
 ```
 
-### Get Single Entity
+**Yearly example:** `GET /api/reports/cash-flow?interval=year`
 
-```
-GET /api/{entity}/{id}
-```
-
-Returns a single entity by ID.
-
-**Example:**
-```bash
-GET /api/transaction/1
-```
-
-**Response (200):**
+**Response:**
 ```json
-{
-  "id": 1,
-  "date": "2025-01-15",
-  ...
-}
+[
+  { "period": "2024", "label": "2024", "income": 62000, "expenses": 38000, "savings": 6000, "net": 18000 },
+  { "period": "2025", "label": "2025", "income": 10400, "expenses": 5900, "savings": 1100, "net": 3400 }
+]
 ```
 
-**Response (404):**
+### Available Years
+
+```
+GET /api/reports/years
+```
+
+Returns years that have transaction data.
+
+**Response:**
 ```json
-{
-  "error": true,
-  "message": "transaction not found",
-  "id": 1
-}
+["2024", "2025"]
 ```
 
-### Create Entity
+---
+
+## Investment Endpoints
+
+### Refresh Prices
 
 ```
-POST /api/{entity}
+POST /api/investments/refresh
 ```
 
-Creates a new entity. Request body should contain the entity data.
+Fetches live market data and updates all investment holdings with current prices.
 
-**Example:**
-```bash
-curl -X POST http://localhost:8000/api/transaction \
-  -H "Content-Type: application/json" \
-  -d '{
-    "date": "2025-01-15",
-    "merchant_raw": "Whole Foods",
-    "amount": -45.32,
-    "category": "groceries",
-    "account_id": 1
-  }'
-```
-
-**Response (201):**
+**Response:**
 ```json
-{
-  "id": 1,
-  "date": "2025-01-15",
-  "merchant_raw": "Whole Foods",
-  "amount": -45.32,
-  "category": "groceries",
-  "account_id": 1,
-  ...
-}
+{ "updated": 5, "errors": [] }
 ```
 
-### Bulk Create Entities
+### Get Quote
 
 ```
-POST /api/{entity}/bulk
+GET /api/investments/quote/{symbol}
 ```
 
-Creates multiple entities in a single request. Request body should contain `items` array.
+Get live price data for a stock/ETF symbol.
 
-**Example:**
-```bash
-curl -X POST http://localhost:8000/api/transaction/bulk \
-  -H "Content-Type: application/json" \
-  -d '{
-    "items": [
-      {
-        "date": "2025-01-15",
-        "merchant_raw": "Whole Foods",
-        "amount": -45.32,
-        "category": "groceries",
-        "account_id": 1
-      },
-      {
-        "date": "2025-01-14",
-        "merchant_raw": "Shell Gas",
-        "amount": -55.00,
-        "category": "transportation",
-        "account_id": 1
-      }
-    ]
-  }'
-```
-
-**Response (201):**
+**Response:**
 ```json
-{
-  "created": 2,
-  "ids": [1, 2]
-}
+{ "symbol": "VOO", "price": 485.32, "name": "Vanguard S&P 500 ETF" }
 ```
 
-### Update Entity
+---
+
+## Account Endpoints
+
+### Sync Balances
 
 ```
-PUT /api/{entity}/{id}
+POST /api/accounts/sync-balances
 ```
 
-Updates an existing entity. Request body should contain only the fields to update.
+Recalculates account balances from investment holdings (for brokerage/retirement accounts).
 
-**Example:**
-```bash
-curl -X PUT http://localhost:8000/api/transaction/1 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "category": "groceries",
-    "notes": "Weekly shopping",
-    "is_reviewed": true
-  }'
-```
+---
 
-**Response (200):**
-```json
-{
-  "id": 1,
-  "date": "2025-01-15",
-  "merchant_raw": "Whole Foods",
-  "amount": -45.32,
-  "category": "groceries",
-  "notes": "Weekly shopping",
-  "is_reviewed": true,
-  ...
-}
-```
-
-### Delete Entity
-
-```
-DELETE /api/{entity}/{id}
-```
-
-Deletes an entity by ID.
-
-**Example:**
-```bash
-curl -X DELETE http://localhost:8000/api/transaction/1
-```
-
-**Response (200):**
-```json
-{
-  "deleted": true,
-  "id": 1
-}
-```
-
-## File Upload
+## File Upload & Import
 
 ### Upload File
 
@@ -321,28 +255,11 @@ curl -X DELETE http://localhost:8000/api/transaction/1
 POST /api/upload
 ```
 
-Uploads a CSV file for parsing. Returns a file ID for use with `/extract`.
+Upload a CSV file. Returns a `file_id` for use with `/extract`.
 
-**Request:**
-```bash
-curl -X POST http://localhost:8000/api/upload \
-  -F "file=@transactions.csv"
-```
-
-**Response (201):**
-```json
-{
-  "file_id": "file_1735689000_abc123xyz",
-  "filename": "transactions.csv",
-  "size": 15234,
-  "mimetype": "text/csv"
-}
-```
-
-**Constraints:**
-- Maximum file size: 10MB (configurable via `MAX_FILE_SIZE`)
-- Supported formats: CSV, Excel (.xlsx, .xls)
-- Files expire after 1 hour
+- Max file size: 10MB
+- Formats: CSV, Excel (.xlsx, .xls)
+- Files auto-expire after 1 hour
 
 ### Extract Data
 
@@ -350,36 +267,11 @@ curl -X POST http://localhost:8000/api/upload \
 POST /api/extract
 ```
 
-Parses uploaded CSV file and returns transactions ready for import. Automatically detects bank format.
+Parse an uploaded CSV and return structured transactions. Auto-detects bank format.
 
-**Request:**
-```bash
-curl -X POST http://localhost:8000/api/extract \
-  -H "Content-Type: application/json" \
-  -d '{
-    "file_id": "file_1735689000_abc123xyz",
-    "account_id": 1
-  }'
-```
-
-**Response (200):**
+**Body:**
 ```json
-{
-  "rows": [
-    {
-      "date": "2025-01-15",
-      "merchant_raw": "Whole Foods",
-      "merchant_clean": "Whole Foods",
-      "amount": -45.32,
-      "category": "uncategorized",
-      "type": "expense",
-      "account_id": 1,
-      "import_hash": "abc123xyz"
-    }
-  ],
-  "total": 1,
-  "format_detected": "amex"
-}
+{ "file_id": "file_xxx", "account_id": 1 }
 ```
 
 ### Import Transactions
@@ -388,195 +280,26 @@ curl -X POST http://localhost:8000/api/extract \
 POST /api/import
 ```
 
-Combined endpoint that uploads, parses, and imports transactions in one request. Automatically detects and skips duplicates.
+Combined upload + parse + import in one request.
 
-**Request:**
-```bash
-curl -X POST http://localhost:8000/api/import \
-  -F "file=@transactions.csv" \
-  -F "account_id=1"
-```
+**Request:** multipart/form-data with `file` and `account_id` fields.
 
-**Response (201):**
+**Response:**
 ```json
-{
-  "imported": 25,
-  "duplicates": 3,
-  "total": 28,
-  "ids": [1, 2, 3, ...]
-}
+{ "imported": 25, "duplicates": 0, "total": 25, "ids": [1, 2, 3, ...] }
 ```
 
-## Supported Bank Formats
+### Supported Bank Formats
 
-The CSV import feature auto-detects and supports the following bank formats:
-
-### AMEX (American Express)
-**Required Headers:** Posting Date, Amount, Description, Reference Number
-
-**Example CSV:**
-```
-Posting Date,Reference Number,Description,Amount
-01/15/2025,123456789,WHOLE FOODS MARKET,-45.32
-01/14/2025,123456788,SHELL GAS STATION,-55.00
-```
-
-### USAA
-**Required Headers:** Transaction Date, Posting Date, Description, Amount
-
-**Example CSV:**
-```
-Transaction Date,Posting Date,Description,Amount
-01/15/2025,01/15/2025,WHOLE FOODS MARKET,-45.32
-01/14/2025,01/14/2025,DEPOSIT PAYCHECK,+2500.00
-```
-
-### PayPal Savings
-**Required Headers:** Date, Name, Net
-
-**Example CSV:**
-```
-Date,Name,Net
-2025-01-15,Withdrawal to Bank,+500.00
-2025-01-14,Interest,+0.45
-```
-
-### Abound Credit Union
-**Required Headers:** Transaction Date, Description, Amount
-
-**Example CSV:**
-```
-Transaction Date,Description,Amount
-01/15/2025,WHOLE FOODS MARKET,-45.32
-01/14/2025,SALARY DEPOSIT,+2500.00
-```
-
-### Fidelity / Schwab
-**Required Headers:** Symbol, Quantity/Shares, Price
-
-Typically used for investment holdings.
-
-## Query Parameters
-
-### Sorting
-
-Use `sort_by` with optional `sort_order`:
-
-```
-GET /api/transaction?sort_by=date&sort_order=desc
-GET /api/transaction?sort_by=amount&sort_order=asc
-```
-
-**Default:** Ascending order
-
-### Filtering
-
-#### Exact Match
-```
-GET /api/transaction?category=groceries&type=expense
-```
-
-#### Greater Than or Equal (>=)
-```
-GET /api/transaction?amount_gte=100&date_gte=2025-01-01
-```
-
-#### Less Than or Equal (<=)
-```
-GET /api/transaction?amount_lte=50&date_lte=2025-01-31
-```
-
-#### Pattern Match (LIKE)
-```
-GET /api/transaction?merchant_raw_like=%whole%
-```
-
-### Limiting Results
-
-```
-GET /api/transaction?limit=50
-GET /api/transaction?sort_by=-date&limit=10
-```
-
-## Examples
-
-### Get Recent Expenses
-
-```bash
-curl "http://localhost:8000/api/transaction?sort_by=date&sort_order=desc&category=groceries&limit=10"
-```
-
-### Get Accounts by Institution
-
-```bash
-curl "http://localhost:8000/api/account?institution=chase&is_active=1"
-```
-
-### Filter Transactions by Date Range
-
-```bash
-curl "http://localhost:8000/api/transaction?date_gte=2025-01-01&date_lte=2025-01-31&sort_by=date"
-```
-
-### Create Account
-
-```bash
-curl -X POST http://localhost:8000/api/account \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Chase Checking",
-    "institution": "chase",
-    "account_type": "checking",
-    "balance": 5000.00,
-    "is_asset": true,
-    "is_active": true
-  }'
-```
-
-### Create Budget
-
-```bash
-curl -X POST http://localhost:8000/api/budget \
-  -H "Content-Type: application/json" \
-  -d '{
-    "category": "groceries",
-    "monthly_limit": 400.00,
-    "month": "2025-01",
-    "is_active": true
-  }'
-```
-
-### Create Categorization Rule
-
-```bash
-curl -X POST http://localhost:8000/api/categoryrule \
-  -H "Content-Type: application/json" \
-  -d '{
-    "match_pattern": "whole",
-    "match_type": "contains",
-    "category": "groceries",
-    "merchant_clean_name": "Whole Foods",
-    "is_active": true,
-    "priority": 1
-  }'
-```
-
-## Rate Limiting
-
-*Not yet implemented. All endpoints are currently unlimited.*
-
-## Webhooks
-
-*Not yet implemented.*
-
-## Changelog
-
-### Version 1.0.0 (2025-01-15)
-- Initial release
-- Basic CRUD operations for all entities
-- CSV import with bank format detection
-- Duplicate transaction detection
+| Bank | Auto-detected By |
+|------|-----------------|
+| AMEX | Posting Date, Reference Number, Description, Amount |
+| USAA | Transaction Date, Posting Date, Description, Amount |
+| PayPal Savings | Date, Name, Net |
+| Abound Credit Union | Transaction Date, Description, Amount |
+| Fidelity | Symbol, Quantity, Price |
+| Schwab | Symbol, Shares, Price |
 
 ---
 
-For more information, see the main [README.md](../README.md).
+For setup instructions, see [README.md](../README.md). For architecture details, see [ARCHITECTURE.md](../ARCHITECTURE.md).

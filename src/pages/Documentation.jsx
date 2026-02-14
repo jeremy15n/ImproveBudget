@@ -7,82 +7,144 @@ const sections = [
   {
     title: "Getting Started",
     content: `
-## Welcome to BetterBudget — Your Personal Finance Command Center
+## Welcome to BetterBudget
 
-BetterBudget gives you **full visibility** into every dollar you earn, spend, save, and invest across all your financial accounts.
+BetterBudget is a fully local personal finance app. All your data stays on your computer in a single file — no cloud, no subscriptions, no data sharing.
 
-### Quick Start (5 minutes)
+### Quick Start
 
-1. **Add your accounts** — Go to **Accounts** and add each bank/brokerage account with its current balance.
-2. **Import transactions** — Go to **Import** and upload CSV/Excel exports from each institution.
+1. **Add your accounts** — Go to **Accounts** and add each bank, brokerage, or credit card with its current balance. Mark each as an asset or liability.
+2. **Import transactions** — Go to **Import**, select an account, and upload a CSV export from your bank.
 3. **Set up rules** — Go to **Rules** and create auto-categorization rules for recurring merchants.
 4. **Create budgets** — Go to **Budget** and set monthly spending limits by category.
-5. **Set goals** — Go to **Goals** and define your financial independence targets.
+5. **Set goals** — Go to **Goals** and define your financial targets.
+6. **View your dashboard** — The **Dashboard** gives you an at-a-glance overview of everything.
 `
   },
   {
-    title: "Accounts Setup",
+    title: "Dashboard",
     content: `
-## Setting Up Your Accounts
+## Dashboard Overview
 
-### Your Current Accounts
-- **USAA** — Credit card
-- **Fidelity** — Individual brokerage account
-- **Schwab** — Roth IRA + Traditional IRA
-- **Abound Credit Union** — Checking & savings accounts
-- **PayPal Savings** — High-yield savings
-- **AMEX** — Credit cards
+The Dashboard is your financial command center. It shows key metrics and charts for a selected time period.
 
-### How to Add an Account
-1. Navigate to the **Accounts** page
+### Date Filter
+
+Use the filter bar at the top to switch between:
+- **This Month** — Current calendar month
+- **Last Month** — Previous calendar month
+- **Year to Date** — January 1 through today
+- **Specific Year** — Any year that has transaction data
+
+All stat cards and charts update automatically when you change the filter.
+
+### Stat Cards
+
+- **Net Worth** — Live calculation from your active accounts (total assets minus total liabilities). Matches the Net Worth page.
+- **Income** — Total income for the selected period
+- **Expenses** — Total expenses for the selected period
+- **Savings Rate** — Percentage of income going to savings: (savings / income) x 100
+
+### Charts & Breakdowns
+
+- **Cash Flow** — Bar chart showing income (green), expenses (red), and savings (indigo) by month
+- **Income by Category** — Pie chart of income sources for the selected period
+- **Spending by Category** — Pie chart of expense categories for the selected period
+- **Recent Transactions** — Latest transactions across all accounts
+- **Accounts Summary** — Current balances for all accounts
+`
+  },
+  {
+    title: "Accounts & Net Worth",
+    content: `
+## Managing Accounts
+
+### Adding Accounts
+
+1. Go to the **Accounts** page
 2. Click **Add Account**
-3. Select the institution, account type, and enter the current balance
-4. Mark whether it's an **asset** (checking, savings, investments) or **liability** (credit card balance, loans)
+3. Enter the name, institution, account type, and current balance
+4. Mark whether it's an **asset** or **liability**
 
 ### Asset vs Liability
+
 - **Assets** add to your net worth: checking, savings, brokerage, retirement (IRAs, 401k)
 - **Liabilities** subtract from your net worth: credit card balances, loans, mortgages
 
-### Best Practice
-Update balances whenever you import new transactions or at least monthly.
+### Active vs Inactive
+
+Inactive accounts are excluded from net worth calculations and the Dashboard. Use this for closed accounts you want to keep for historical reference.
+
+## Net Worth Tracking
+
+### Live Net Worth
+
+Your net worth is calculated in real-time from your active accounts: **Total Assets - Total Liabilities**. This value appears on both the Dashboard and the Net Worth page.
+
+### Snapshots
+
+Click **Take Snapshot** on the Net Worth page to save a point-in-time record. Snapshots enable:
+- Historical net worth chart showing your trajectory over time
+- Trend percentage on the Dashboard (current vs last snapshot)
+
+Take snapshots monthly for the best historical tracking.
+
+### Balance Sync
+
+For brokerage and retirement accounts, click **Sync Balances** to recalculate account balances from your investment holdings.
+
+### What-If Projections
+
+The Net Worth page includes a projection calculator. Adjust:
+- **Projection years** — How far into the future (1-50 years)
+- **Additional monthly savings** — Extra savings per month
+- **Expense reduction** — Monthly costs to cut
+- **Expected annual return** — Investment growth rate (default 7%)
+
+Three scenarios are shown:
+- **Current trajectory** — No changes
+- **Optimized plan** — With your specified savings/cuts
+- **Aggressive savings** — 2x savings + 1.5x expense cuts
 `
   },
   {
-    title: "Net Worth Projections",
+    title: "Transactions",
     content: `
-## Net Worth What-If Calculator
+## Working with Transactions
 
-### How to Use
-On the **Net Worth** page, scroll to the projection section to model different scenarios:
+### Viewing & Filtering
 
-1. **Projection Years** — How far into the future (1-50 years)
-2. **Additional Monthly Savings** — Increase your savings by X amount
-3. **Expense Reduction** — Cut costs by Y amount
-4. **Expected Annual Return** — Investment growth rate (default 7%)
+The Transactions page shows a paginated list with:
+- **Search** — Search by merchant name or notes
+- **Category filter** — Filter to a specific category
+- **Type filter** — Filter by income, expense, savings, transfer, or refund
+- **Account filter** — Filter to a specific account
+- **Date range** — Filter by start/end date
 
-### Three Scenarios Shown
-- **Current Trajectory** (gray dashed line) — Your path if nothing changes
-- **Optimized Plan** (blue line) — With your additional savings + expense cuts
-- **Aggressive Savings** (green line) — 2x additional savings + 1.5x expense cuts
+### Transaction Types
 
-### Example Scenarios
-| Scenario | Monthly Change | 10-Year Impact |
-|----------|---------------|----------------|
-| Cut subscriptions | -$100 expenses | +$17,300 |
-| Side hustle income | +$500 savings | +$86,500 |
-| Both combined | +$600/month | +$103,800 |
+| Type | Amount Sign | Description |
+|------|------------|-------------|
+| Income | Positive (+) | Money earned (salary, dividends, refunds) |
+| Expense | Negative (-) | Money spent (purchases, bills, fees) |
+| Savings | Negative (-) | Money moved to savings (treated separately from expenses in reports) |
+| Transfer | Either | Moves between your own accounts (excluded from income/expense totals) |
+| Refund | Positive (+) | Money returned |
 
-### The Power of Compounding
-The calculator includes compound returns:
-- Assumes monthly contributions
-- Investment growth compounds monthly
-- Shows how small changes add up over time
-- Default 7% annual return (historical stock market average)
+### Editing
 
-### Tips
-- Start conservative (5-6% return for mixed portfolios)
-- Use this to justify lifestyle changes (e.g., "canceling that subscription = $20k in 10 years")
-- Review quarterly and adjust based on actual performance
+Click the edit icon on any transaction to change its date, amount, type, category, merchant name, account, or notes. Changing the type between income and expense automatically flips the amount sign.
+
+### Bulk Actions
+
+Select multiple transactions using the checkboxes, then use the bulk action bar to:
+- **Change category** — Apply a category to all selected
+- **Change type** — Change the transaction type (amount signs flip automatically)
+- **Delete** — Remove all selected transactions (with confirmation)
+
+### Deleting
+
+Click the trash icon on any individual transaction, or use bulk delete for multiple.
 `
   },
   {
@@ -90,141 +152,211 @@ The calculator includes compound returns:
     content: `
 ## Importing Financial Data
 
-### CSV Import (Primary Method)
-The import system uses AI to parse any CSV or Excel format from your bank. Here's how:
+### How to Import
 
-1. Log in to your bank's website
-2. Navigate to the transactions/activity section
-3. Download as CSV or Excel
-4. In BetterBudget, go to **Import** → select the account → upload the file
+1. Log in to your bank's website and download transactions as CSV
+2. In BetterBudget, go to **Import**
+3. Select the target account
+4. Upload the CSV file
+5. The system auto-detects the bank format, parses transactions, and imports them
 
-### How Each Bank Exports
+### Supported Banks
 
 | Bank | Where to Export |
 |------|----------------|
-| AMEX | Statements & Activity → Download CSV |
-| USAA | Banking → Transactions → Download |
-| Abound CU | Account → Statement → Download CSV |
-| PayPal | Activity → All Transactions → Download |
-| Fidelity | Accounts → Activity & Orders → Download |
-| Schwab | Accounts → History → Export |
+| AMEX | Statements & Activity > Download CSV |
+| USAA | Banking > Transactions > Download |
+| Abound Credit Union | Account > Statement > Download CSV |
+| PayPal Savings | Activity > All Transactions > Download |
+| Fidelity | Accounts > Activity & Orders > Download |
+| Schwab | Accounts > History > Export |
 
 ### Duplicate Detection
-Every transaction gets a **fingerprint** (hash) based on date + amount + merchant. When you re-import:
-- Transactions with matching fingerprints are **automatically skipped**
-- This prevents double-counting, especially important for transfers between accounts
-- You'll see a summary of how many were imported vs skipped
 
-### Transfer Detection
-Transfers between your own accounts (e.g., checking → savings) appear as both a debit and credit. Mark these as **transfer** type to exclude them from income/expense calculations.
+Every transaction gets a fingerprint (hash) based on **date + amount + merchant name**. When you re-import:
+- Matching transactions are automatically skipped
+- You'll see a count of imported vs skipped
+- This prevents double-counting when re-importing overlapping date ranges
+
+### Tips
+
+- Import regularly (weekly or monthly) to keep data current
+- After importing, review transactions and fix any miscategorized items
+- Use the Rules page to set up auto-categorization for recurring merchants
+- Mark transfers between your own accounts as "transfer" type to exclude them from income/expense calculations
 `
   },
   {
     title: "Categorization Rules",
     content: `
-## Auto-Categorization Engine
+## Auto-Categorization
 
 ### How Rules Work
-Rules match merchant names to categories. When you click **Run Rules**, all uncategorized transactions are processed against your rules.
+
+Rules match merchant names from imported transactions to categories. When you click **Run Rules** on the Rules page, all uncategorized transactions are processed.
 
 ### Creating Rules
-1. Go to **Rules** page
-2. Click **Add Rule**
-3. Enter a pattern (e.g., "NETFLIX"), match type, and target category
 
-### Match Types
-- **Contains** — Matches if the merchant name contains the pattern (most common)
-- **Starts With** — Matches if merchant name starts with the pattern
-- **Exact** — Only matches exact merchant name
+1. Go to the **Rules** page
+2. Click **Add Rule**
+3. Set a **pattern** (text to match against merchant names)
+4. Choose a **match type**: Contains, Starts With, or Exact
+5. Select the **target category**
+6. Optionally set a **clean name** to normalize the merchant display name
 
 ### Example Rules
+
 | Pattern | Match Type | Category | Clean Name |
 |---------|-----------|----------|------------|
-| NETFLIX | contains | Subscriptions | Netflix |
-| SPOTIFY | contains | Subscriptions | Spotify |
-| AMZN | contains | Shopping | Amazon |
-| WHOLE FOODS | contains | Groceries | Whole Foods |
-| SHELL | contains | Transportation | Shell Gas |
-| FIDELITY | contains | Investments | Fidelity |
+| NETFLIX | Contains | Subscriptions | Netflix |
+| SPOTIFY | Contains | Subscriptions | Spotify |
+| AMZN | Contains | Shopping | Amazon |
+| WHOLE FOODS | Contains | Groceries | Whole Foods |
+| SHELL OIL | Contains | Transportation | Shell Gas |
 
 ### Priority
-Higher priority rules are checked first. Use this when patterns might overlap (e.g., "AMAZON PRIME" should be Subscriptions, while "AMAZON" is Shopping).
+
+Higher priority rules are checked first. Use this when patterns overlap. For example, "AMAZON PRIME" (priority 10, Subscriptions) should match before "AMAZON" (priority 5, Shopping).
 
 ### Merchant Cleaning
-The optional **Clean Name** field normalizes messy bank descriptions like "NETFLIX.COM 800-XXX-XXXX CA" into just "Netflix".
+
+The optional **Clean Name** field normalizes messy bank descriptions. For example, "NETFLIX.COM 800-XXX-XXXX CA" becomes just "Netflix" in your transaction list.
 `
   },
   {
-    title: "Budget Tracking",
+    title: "Budget & Goals",
     content: `
-## Budget vs Actual
+## Budget Tracking
 
-### Setting Budgets
-1. Go to **Budget** page
-2. Click **Add Budget** for each spending category
+### Setting Up Budgets
+
+1. Go to the **Budget** page
+2. Click **Add Budget** for each spending category you want to track
 3. Set a monthly dollar limit
+4. Use the month navigation arrows to view budget performance for any month
 
 ### How It Works
-- Budgets compare your **actual spending** (from imported transactions) against your **monthly limit**
-- Progress bars show how much you've used
-- Red indicates over-budget, green indicates remaining funds
 
-### Recommended Budget Categories (50/30/20 Rule)
-For your strong income at 26, consider:
-- **Needs (50%)**: Housing, Utilities, Insurance, Healthcare, Groceries, Transportation
-- **Wants (30%)**: Entertainment, Shopping, Food & Dining, Travel, Subscriptions
-- **Savings/Investing (20%+)**: Since you're focused on FI, aim for 30-50% savings rate
+- Budgets compare your **actual spending** (from categorized transactions) against your **monthly limit**
+- Progress bars show how much of each budget you've used
+- Red indicates over-budget, green indicates under-budget
+- Navigate between months to see historical budget performance
 
-### Tips
-- Start with 5-8 key categories rather than trying to budget everything
-- Review monthly and adjust limits based on actual spending patterns
-- The savings rate on your Dashboard automatically calculates (Income - Expenses) / Income
+### Suggested Approach (50/30/20 Rule)
+
+- **Needs (50%)** — Housing, utilities, insurance, healthcare, groceries, transportation
+- **Wants (30%)** — Entertainment, shopping, dining out, travel, subscriptions
+- **Savings (20%+)** — Savings transfers, investments, debt payoff
+
+Start with 5-8 key categories rather than budgeting everything at once.
+
+## Financial Goals
+
+### Creating Goals
+
+1. Go to the **Goals** page
+2. Click **Add Goal**
+3. Set a name, target amount, current amount, and target date
+
+### Examples
+
+- Emergency fund: $10,000 by end of year
+- Down payment: $50,000 by 2028
+- Vacation fund: $3,000 by summer
+
+Update current amounts as you make progress.
 `
   },
   {
-    title: "Architecture & Security",
+    title: "Investments",
     content: `
-## System Architecture
+## Investment Tracking
 
-### High-Level Architecture
+### Managing Holdings
+
+The **Investments** page shows your portfolio with current values, gains/losses, and allocation.
+
+### Adding Holdings
+
+Holdings can be added two ways:
+- **CSV Import** — Import from Fidelity or Schwab (auto-detects positions)
+- **Manual Entry** — Add individual holdings with symbol, shares, and cost basis
+
+### Live Price Refresh
+
+Click **Refresh Prices** to fetch current market prices for all holdings. This updates:
+- Current share prices
+- Total current value
+- Gain/loss calculations
+
+### Account Sync
+
+After refreshing prices, click **Sync Balances** on the Net Worth page to update your brokerage/retirement account balances based on current investment values.
+`
+  },
+  {
+    title: "Categories & Settings",
+    content: `
+## Custom Categories
+
+### Managing Categories
+
+Go to **Settings** to view, add, edit, or delete spending categories.
+
+Each category has:
+- **Name** — Internal identifier used in the database
+- **Label** — Display name shown in the UI
+- **Color** — Color used in charts and category indicators
+
+### Default Categories
+
+BetterBudget comes with ~40 default categories covering common spending areas. You can:
+- Edit default category labels and colors
+- Add new custom categories
+- Delete categories you don't need (transactions using that category will keep their assignment)
+
+### Where Categories Appear
+
+Categories are used throughout the app:
+- Transaction categorization (manual or via rules)
+- Budget tracking (budgets are per-category)
+- Dashboard pie charts (spending and income by category)
+- Transaction filters
+`
+  },
+  {
+    title: "Data & Privacy",
+    content: `
+## Your Data
+
+### Where It Lives
+
+All your financial data is stored in a single local file:
+
 \`\`\`
-[Bank Exports] → [AI Parser] → [Duplicate Detection] → [Database]
-                                                                    ↓
-[Dashboard] ← [Query Engine] ← [Rule Engine] ← [Categorization Rules]
+backend/data/budget.db
 \`\`\`
 
-### Data Flow
-1. **Ingestion**: CSV files uploaded → AI extracts structured data
-2. **Processing**: Duplicate detection → Rule-based categorization → Type classification
-3. **Storage**: Encrypted database with standardized transaction schema
-4. **Presentation**: Real-time dashboards, charts, and reports
+This is a SQLite database containing all transactions, accounts, budgets, categories, rules, investments, goals, and net worth snapshots.
 
-### Database Schema
-- **Account** — Institution, type, balance, asset/liability flag
-- **Transaction** — Date, merchant, amount, category, account reference, review flags
-- **Budget** — Category + monthly limit
-- **Investment** — Symbol, shares, cost basis, current value
-- **NetWorthSnapshot** — Point-in-time financial position
-- **FinancialGoal** — Target amount, progress, timeline
-- **CategoryRule** — Pattern matching rules for auto-categorization
+### Privacy
 
-### Security
-- All data encrypted at rest and in transit
-- No bank credentials stored in BetterBudget
-- Hashed transaction fingerprints (never raw account numbers)
-- Only last 4 digits of account numbers stored
+- **No cloud storage** — Everything stays on your computer
+- **No account credentials** — You import CSV files, never connect directly to banks
+- **No tracking or analytics** — No data is sent anywhere
+- **One exception** — The optional "Refresh Prices" feature fetches live stock prices from a market data API. No personal data is sent — only stock symbols.
 
-### Duplicate Detection Logic
-\`\`\`
-hash = sha(date + "|" + amount + "|" + merchant_raw)
-if hash exists in account transactions → skip
-\`\`\`
+### Backup
 
-### Scalability
-- Entity-based architecture supports unlimited accounts and transactions
-- Rule engine processes in priority order for efficient categorization
-- Snapshot-based net worth tracking grows with your financial complexity
-- Investment tracking supports any asset class (stocks, bonds, real estate, crypto)
+Copy \`backend/data/budget.db\` to a safe location regularly. This single file contains everything.
+
+### Restore
+
+Replace \`backend/data/budget.db\` with your backup and restart the app.
+
+### Start Fresh
+
+Delete \`backend/data/budget.db\` and restart the backend. A new empty database with default categories will be created automatically.
 `
   }
 ];
@@ -241,7 +373,7 @@ export default function Documentation() {
 
   return (
     <div>
-      <PageHeader title="Documentation" subtitle="How to use your personal finance app" />
+      <PageHeader title="Documentation" subtitle="Learn how to use BetterBudget" />
 
       <div className="space-y-2">
         {sections.map((section, idx) => (

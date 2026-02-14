@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useCategories } from "../../hooks/useCategories";
 
-const TYPES = ["income", "expense", "transfer", "refund"];
+const TYPES = ["income", "expense", "savings", "transfer", "refund"];
 
 export default function TransactionEditDialog({ transaction, open, onClose, onSave, accounts }) {
   const { categoryList, getCategoryLabel } = useCategories();
@@ -49,7 +49,7 @@ export default function TransactionEditDialog({ transaction, open, onClose, onSa
               <Label>Type</Label>
               <Select value={form.type || "expense"} onValueChange={(v) => {
                 let newAmount = form.amount || 0;
-                if (v === 'expense' && newAmount > 0) newAmount = -Math.abs(newAmount);
+                if ((v === 'expense' || v === 'savings') && newAmount > 0) newAmount = -Math.abs(newAmount);
                 if (v === 'income' && newAmount < 0) newAmount = Math.abs(newAmount);
                 setForm({ ...form, type: v, amount: newAmount });
               }}>

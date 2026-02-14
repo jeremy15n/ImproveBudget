@@ -51,6 +51,23 @@ class Entity {
     return this.request('GET', url);
   }
 
+  async listPaginated(page = 1, limit = 50, sortField, filters = {}) {
+    const params = new URLSearchParams();
+    params.append('page', page);
+    params.append('limit', limit);
+    if (sortField) {
+      params.append('sort_by', sortField.replace(/^-/, ''));
+      params.append('sort_order', sortField.startsWith('-') ? 'desc' : 'asc');
+    }
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && value !== null && value !== '' && value !== 'all') {
+        params.append(key, value);
+      }
+    }
+    const url = `${this.endpoint}?${params.toString()}`;
+    return this.request('GET', url);
+  }
+
   async filter(conditions, sortField, limit) {
     const params = new URLSearchParams();
     
@@ -116,6 +133,32 @@ class APIClient {
     };
   }
 
+  async request(method, url, body = null) {
+    const options = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    if (body) {
+      options.body = JSON.stringify(body);
+    }
+
+    // Ensure the URL is absolute
+    const absoluteUrl = url.startsWith('http') ? url : `${this.baseUrl}${url}`;
+
+    const response = await fetch(absoluteUrl, options);
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || error.message || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+
   setBaseUrl(baseUrl) {
     this.baseUrl = baseUrl;
     // Reinitialize entities with new base URL
@@ -129,6 +172,30 @@ class APIClient {
       FinancialGoal: new Entity('FinancialGoal', this.baseUrl),
       Budget: new Entity('Budget', this.baseUrl),
     };
+  }
+
+  async getCashFlow(startDate, endDate, interval = 'month') {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    if (interval) params.append('interval', interval);
+    return this.request('GET', `/reports/cash-flow?${params.toString()}`);
+  }
+
+  async getReportYears() {
+    return this.request('GET', '/reports/years');
+  }
+
+  async refreshInvestmentPrices() {
+    return this.request('POST', '/investments/refresh');
+  }
+
+  async getInvestmentQuote(symbol) {
+    return this.request('GET', `/investments/quote/${symbol}`);
+  }
+
+  async post(url, body) {
+    return this.request('POST', url, body);
   }
 }
 

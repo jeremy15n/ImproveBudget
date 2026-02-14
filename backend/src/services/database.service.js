@@ -17,29 +17,57 @@ export class DatabaseService {
    * @param {number} limit - Maximum records to return
    * @returns {array} Array of records
    */
-  list(table, filters = {}, sort = {}, limit = null) {
+  list(table, filters = {}, sort = {}, limit = null, pagination = null) {
     try {
       const dbInstance = this.db;
       if (!dbInstance) {
         throw new Error('Database not initialized');
       }
 
-      let query = `SELECT * FROM ${this.escapeTableName(table)}`;
+      const escapedTable = this.escapeTableName(table);
       const params = [];
 
       // Build WHERE clause
       const whereClause = this.buildWhereClause(filters, params);
-      if (whereClause) {
-        query += ` WHERE ${whereClause}`;
-      }
+      const whereSQL = whereClause ? ` WHERE ${whereClause}` : '';
 
-      // Add sorting
+      // Build ORDER BY
+      let orderSQL = '';
       if (sort.sort_by) {
         const orderDir = sort.sort_order === 'desc' ? 'DESC' : 'ASC';
-        query += ` ORDER BY ${this.escapeColumnName(sort.sort_by)} ${orderDir}`;
+        orderSQL = ` ORDER BY ${this.escapeColumnName(sort.sort_by)} ${orderDir}`;
       }
 
-      // Add limit
+      // Paginated path: return { data, meta }
+      if (pagination && pagination.page) {
+        const page = Math.max(1, parseInt(pagination.page));
+        const perPage = Math.min(500, Math.max(1, parseInt(pagination.limit) || 50));
+        const offset = (page - 1) * perPage;
+
+        // Count total matching rows
+        const countParams = [...params];
+        const countStmt = dbInstance.prepare(`SELECT COUNT(*) as total FROM ${escapedTable}${whereSQL}`);
+        const countResult = countStmt.get(...countParams);
+        const total = countResult.total;
+
+        // Fetch page
+        const dataQuery = `SELECT * FROM ${escapedTable}${whereSQL}${orderSQL} LIMIT ${perPage} OFFSET ${offset}`;
+        const dataStmt = dbInstance.prepare(dataQuery);
+        const data = dataStmt.all(...params);
+
+        return {
+          data,
+          meta: {
+            total,
+            page,
+            limit: perPage,
+            totalPages: Math.ceil(total / perPage)
+          }
+        };
+      }
+
+      // Non-paginated path: return plain array (backwards compatible)
+      let query = `SELECT * FROM ${escapedTable}${whereSQL}${orderSQL}`;
       if (limit) {
         query += ` LIMIT ${parseInt(limit)}`;
       }
@@ -233,6 +261,14 @@ export class DatabaseService {
 
     for (const [key, value] of Object.entries(filters)) {
       if (value === undefined || value === null || value === '') {
+        continue;
+      }
+
+      // Multi-field text search (searches merchant_raw, merchant_clean, notes)
+      if (key === 'search') {
+        conditions.push(`(${this.escapeColumnName('merchant_raw')} LIKE ? OR ${this.escapeColumnName('merchant_clean')} LIKE ? OR ${this.escapeColumnName('notes')} LIKE ?)`);
+        const searchVal = `%${value}%`;
+        params.push(searchVal, searchVal, searchVal);
         continue;
       }
 

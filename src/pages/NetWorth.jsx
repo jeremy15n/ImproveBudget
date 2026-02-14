@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
-import { Plus, TrendingUp, Camera } from "lucide-react";
+import { Plus, TrendingUp, Camera, RefreshCw, TrendingDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import moment from "moment";
 import PageHeader from "../components/shared/PageHeader";
@@ -23,6 +23,13 @@ export default function NetWorth() {
   const { data: transactions = [] } = useQuery({
     queryKey: ["transactions"],
     queryFn: () => apiClient.entities.Transaction.list("-date", 500),
+  });
+
+  const syncBalancesMut = useMutation({
+    mutationFn: () => apiClient.post('/accounts/sync-balances'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["accounts"] });
+    },
   });
 
   const snapshotMut = useMutation({
@@ -54,15 +61,16 @@ export default function NetWorth() {
 
   const latest = snapshots[snapshots.length - 1];
   const previous = snapshots[snapshots.length - 2];
-  const currentNW = latest?.net_worth ?? accounts.reduce((s, a) => s + (a.is_asset !== false ? (a.balance || 0) : -(a.balance || 0)), 0);
-  const prevNW = previous?.net_worth;
-  const nwChange = prevNW ? currentNW - prevNW : null;
-  const nwChangePct = prevNW ? (nwChange / Math.abs(prevNW)) * 100 : null;
-
+  
   const assets = accounts.filter(a => a.is_asset !== false && a.is_active !== false);
   const liabilities = accounts.filter(a => a.is_asset === false && a.is_active !== false);
   const totalAssets = assets.reduce((s, a) => s + (a.balance || 0), 0);
   const totalLiabilities = liabilities.reduce((s, a) => s + (a.balance || 0), 0);
+  const currentNW = totalAssets - totalLiabilities;
+
+  const lastSnapshotNW = latest?.net_worth;
+  const nwChange = lastSnapshotNW ? currentNW - lastSnapshotNW : null;
+  const nwChangePct = lastSnapshotNW ? (nwChange / Math.abs(lastSnapshotNW)) * 100 : null;
 
   // Calculate monthly income and expenses for projections
   const currentMonth = moment().format("YYYY-MM");
@@ -70,18 +78,25 @@ export default function NetWorth() {
   const monthlyIncome = monthTx.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
   const monthlyExpenses = monthTx.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
 
+  const lastSnapshotDate = latest ? moment(latest.date).format("YYYY-MM-DD") : null;
+  const todayDate = moment().format("YYYY-MM-DD");
+  const canTakeSnapshot = !snapshotMut.isPending && lastSnapshotDate !== todayDate;
+
   return (
     <div>
       <PageHeader
         title="Net Worth"
         subtitle="Track your wealth over time"
-        actions={<Button onClick={takeSnapshot} className="bg-indigo-600 hover:bg-indigo-700" disabled={snapshotMut.isPending}><Camera className="w-4 h-4 mr-2" />Take Snapshot</Button>}
+        actions={<>
+          <Button onClick={() => syncBalancesMut.mutate()} variant="outline" className="mr-2" disabled={syncBalancesMut.isPending}><RefreshCw className="w-4 h-4 mr-2" />Sync Balances</Button>
+          <Button onClick={takeSnapshot} className="bg-indigo-600 hover:bg-indigo-700" disabled={!canTakeSnapshot}><Camera className="w-4 h-4 mr-2" />Take Snapshot</Button>
+        </>}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard label="Net Worth" value={formatCurrency(currentNW)} icon={TrendingUp} trend={nwChangePct} trendLabel="vs last snapshot" iconBg="bg-indigo-50" iconColor="text-indigo-600" />
+        <StatCard label="Live Net Worth" value={formatCurrency(currentNW)} icon={TrendingUp} trend={nwChangePct} trendLabel={latest ? `vs last snapshot (${moment(latest.date).format("MMM D")})` : 'No snapshots yet'} iconBg="bg-indigo-50" iconColor="text-indigo-600" />
         <StatCard label="Total Assets" value={formatCurrency(totalAssets)} icon={TrendingUp} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-        <StatCard label="Total Liabilities" value={formatCurrency(totalLiabilities)} icon={TrendingUp} iconBg="bg-red-50" iconColor="text-red-500" />
+        <StatCard label="Total Liabilities" value={formatCurrency(totalLiabilities)} icon={TrendingDown} iconBg="bg-red-50" iconColor="text-red-500" />
       </div>
 
       {chartData.length > 1 && (

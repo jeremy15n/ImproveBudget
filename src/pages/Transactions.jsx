@@ -1,44 +1,64 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useCallback } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftRight, Trash2, X, Tag, RefreshCw } from "lucide-react";
+import { ArrowLeftRight, Trash2, X, Tag, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import PageHeader from "../components/shared/PageHeader";
 import EmptyState from "../components/shared/EmptyState";
 import TransactionFilters from "../components/transactions/TransactionFilters";
 import TransactionRow from "../components/transactions/TransactionRow";
 import TransactionEditDialog from "../components/transactions/TransactionEditDialog";
-import { formatCurrency, getCategoryLabel, CATEGORY_COLORS } from "../components/shared/formatters";
+import { formatCurrency, getCategoryLabel } from "../components/shared/formatters";
+import { useCategories } from "../hooks/useCategories";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const CATEGORIES = ["housing", "transportation", "food_dining", "groceries", "utilities", "insurance", "healthcare", "debt_payments", "subscriptions", "entertainment", "shopping", "personal_care", "education", "travel", "gifts_donations", "investments", "savings", "income_salary", "income_freelance", "income_investment", "income_other", "transfer", "refund", "fee", "uncategorized"];
-const TYPES = ["income", "expense", "transfer", "refund"];
+const TYPES = ["income", "expense", "savings", "transfer", "refund"];
+const PAGE_SIZES = [50, 100, 200];
 
 export default function Transactions() {
+  const { categoryList } = useCategories();
   const [filters, setFilters] = useState({ search: "", category: "all", type: "all", account: "all" });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [editTx, setEditTx] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const qc = useQueryClient();
 
-  const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ["transactions"],
-    queryFn: () => apiClient.entities.Transaction.list("-date", 1000),
+  // Build server-side filters
+  const serverFilters = {};
+  if (filters.category !== "all") serverFilters.category = filters.category;
+  if (filters.type !== "all") serverFilters.type = filters.type;
+  if (filters.account !== "all") serverFilters.account_id = filters.account;
+  if (filters.search) serverFilters.search = filters.search;
+
+  const { data: result, isLoading } = useQuery({
+    queryKey: ["transactions", page, pageSize, serverFilters],
+    queryFn: () => apiClient.entities.Transaction.listPaginated(page, pageSize, "-date", serverFilters),
+    keepPreviousData: true,
   });
+
+  const transactions = result?.data ?? [];
+  const meta = result?.meta ?? { total: 0, page: 1, limit: pageSize, totalPages: 1 };
+
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts"],
     queryFn: () => apiClient.entities.Account.list(),
   });
-  const { data: categories = [] } = useQuery({
-    queryKey: ["categories"],
-    queryFn: () => apiClient.entities.Category.list("sort_order", 500),
-  });
 
-  const categoryList = categories.length > 0 ? categories.map(c => c.name) : CATEGORIES;
-  const categoryColors = categories.length > 0
-    ? Object.fromEntries(categories.map(c => [c.name, c.color]))
-    : CATEGORY_COLORS;
+  // Reset to page 1 when filters change
+  const handleFilterChange = useCallback((newFilters) => {
+    setFilters(newFilters);
+    setPage(1);
+    setSelectedIds(new Set());
+  }, []);
+
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(parseInt(newSize));
+    setPage(1);
+    setSelectedIds(new Set());
+  };
 
   const updateMut = useMutation({
     mutationFn: ({ id, d }) => apiClient.entities.Transaction.update(id, d),
@@ -67,23 +87,6 @@ export default function Transactions() {
     },
   });
 
-  const filtered = useMemo(() => {
-    return transactions.filter((t) => {
-      if (filters.search) {
-        const s = filters.search.toLowerCase();
-        const match = (t.merchant_clean || "").toLowerCase().includes(s) || (t.merchant_raw || "").toLowerCase().includes(s) || (t.notes || "").toLowerCase().includes(s);
-        if (!match) return false;
-      }
-      if (filters.category !== "all" && t.category !== filters.category) return false;
-      if (filters.type !== "all" && t.type !== filters.type) return false;
-      if (filters.account !== "all" && t.account_id !== filters.account) return false;
-      return true;
-    });
-  }, [transactions, filters]);
-
-  const totalIncome = filtered.filter(t => t.amount > 0 && t.type !== "transfer").reduce((s, t) => s + t.amount, 0);
-  const totalExpenses = filtered.filter(t => t.amount < 0 && t.type !== "transfer").reduce((s, t) => s + Math.abs(t.amount), 0);
-
   const toggleSelect = (id) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -94,10 +97,10 @@ export default function Transactions() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === filtered.length) {
+    if (selectedIds.size === transactions.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filtered.map(t => t.id)));
+      setSelectedIds(new Set(transactions.map(t => t.id)));
     }
   };
 
@@ -109,19 +112,15 @@ export default function Transactions() {
   const handleBulkType = (type) => {
     const ids = Array.from(selectedIds);
     bulkUpdateMut.mutate({ ids, data: { type } });
-    // Also flip amount signs for the affected transactions
-    const toFlip = filtered.filter(t => selectedIds.has(t.id)).filter(t => {
+    const toFlip = transactions.filter(t => selectedIds.has(t.id)).filter(t => {
       if (type === 'expense' && t.amount > 0) return true;
       if (type === 'income' && t.amount < 0) return true;
       return false;
     });
     if (toFlip.length > 0) {
-      // Update amounts individually since each has a different value
       for (const t of toFlip) {
-        const newAmount = -t.amount;
-        apiClient.entities.Transaction.update(t.id, { amount: newAmount });
+        apiClient.entities.Transaction.update(t.id, { amount: -t.amount });
       }
-      // Refresh after a short delay to catch all updates
       setTimeout(() => qc.invalidateQueries({ queryKey: ["transactions"] }), 500);
     }
   };
@@ -131,13 +130,17 @@ export default function Transactions() {
     bulkDeleteMut.mutate(ids);
   };
 
+  // Pagination display
+  const startItem = meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1;
+  const endItem = Math.min(meta.page * meta.limit, meta.total);
+
   return (
     <div>
       <PageHeader
         title="Transactions"
-        subtitle={`${filtered.length} transactions · In: ${formatCurrency(totalIncome)} · Out: ${formatCurrency(totalExpenses)}`}
+        subtitle={`${meta.total} transactions`}
       />
-      <TransactionFilters filters={filters} setFilters={setFilters} accounts={accounts} />
+      <TransactionFilters filters={filters} setFilters={handleFilterChange} accounts={accounts} />
 
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
@@ -188,7 +191,7 @@ export default function Transactions() {
 
       {isLoading ? (
         <div className="space-y-2">{Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-14 rounded-xl" />)}</div>
-      ) : filtered.length === 0 ? (
+      ) : transactions.length === 0 ? (
         <EmptyState icon={ArrowLeftRight} title="No transactions found" description="Import your bank data from the Import page to get started." />
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200/60 divide-y divide-slate-100">
@@ -196,13 +199,13 @@ export default function Transactions() {
           <div className="flex items-center gap-3 py-2 px-3">
             <input
               type="checkbox"
-              checked={selectedIds.size === filtered.length && filtered.length > 0}
+              checked={selectedIds.size === transactions.length && transactions.length > 0}
               onChange={toggleSelectAll}
               className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
             />
             <span className="text-xs text-slate-400 font-medium">Select All</span>
           </div>
-          {filtered.map((t) => (
+          {transactions.map((t) => (
             <TransactionRow
               key={t.id}
               transaction={t}
@@ -214,6 +217,51 @@ export default function Transactions() {
               onDelete={(tx) => deleteMut.mutate(tx.id)}
             />
           ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {meta.total > 0 && (
+        <div className="flex items-center justify-between mt-4 bg-white rounded-2xl border border-slate-200/60 p-3">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-500">
+              Showing {startItem}–{endItem} of {meta.total}
+            </span>
+            <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
+              <SelectTrigger className="w-20 h-7 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZES.map(s => (
+                  <SelectItem key={s} value={String(s)}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-xs text-slate-400">per page</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500">
+              Page {meta.page} of {meta.totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7"
+              disabled={meta.page <= 1}
+              onClick={() => setPage(p => p - 1)}
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-7 w-7"
+              disabled={meta.page >= meta.totalPages}
+              onClick={() => setPage(p => p + 1)}
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
       )}
 

@@ -12,9 +12,10 @@ import dbService from '../services/database.service.js';
 export const listEntities = (req, res, next) => {
   try {
     const { table } = req;
-    const { sort_by, sort_order, limit, ...filters } = req.query;
+    const { sort_by, sort_order, limit, page, ...filters } = req.query;
 
-    const results = dbService.list(table, filters, { sort_by, sort_order }, limit);
+    const pagination = page ? { page, limit: limit || 50 } : null;
+    const results = dbService.list(table, filters, { sort_by, sort_order }, pagination ? null : limit, pagination);
 
     res.json(results);
   } catch (error) {

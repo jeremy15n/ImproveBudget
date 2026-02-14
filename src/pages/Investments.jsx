@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, TrendingUp, Pencil, Trash2 } from "lucide-react";
+import { Plus, TrendingUp, Pencil, Trash2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,7 +46,40 @@ export default function Investments() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["investments"] }),
   });
 
+  const refreshMut = useMutation({
+    mutationFn: () => apiClient.refreshInvestmentPrices(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["investments"] }),
+  });
+
   const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm(emptyInv); };
+
+  const handleSymbolBlur = async (e) => {
+    const symbol = e.target.value;
+    if (!symbol) return;
+    try {
+      const quote = await apiClient.getInvestmentQuote(symbol);
+      if (quote) {
+        setForm(prevForm => ({
+          ...prevForm,
+          name: quote.name,
+          current_price: quote.price,
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to fetch quote:", error);
+      // Optionally, show a toast notification here
+    }
+  };
+
+  useEffect(() => {
+    if (form.shares && form.current_price) {
+      setForm(prevForm => ({
+        ...prevForm,
+        current_value: prevForm.shares * prevForm.current_price
+      }));
+    }
+  }, [form.shares, form.current_price]);
+
 
   const totalValue = investments.reduce((s, i) => s + (i.current_value || 0), 0);
   const totalCost = investments.reduce((s, i) => s + (i.cost_basis || 0), 0);
@@ -64,7 +97,15 @@ export default function Investments() {
       <PageHeader
         title="Investments"
         subtitle={`${investments.length} holdings`}
-        actions={<Button onClick={() => setDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="w-4 h-4 mr-2" />Add Holding</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button onClick={() => refreshMut.mutate()} variant="outline" disabled={refreshMut.isPending}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshMut.isPending ? 'animate-spin' : ''}`} />
+              Refresh Prices
+            </Button>
+            <Button onClick={() => setDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="w-4 h-4 mr-2" />Add Holding</Button>
+          </div>
+        }
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -124,17 +165,18 @@ export default function Investments() {
           <DialogHeader><DialogTitle>{editing ? "Edit Holding" : "Add Holding"}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2"><Label>Symbol</Label><Input value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value.toUpperCase() })} placeholder="VTI" /></div>
+              <div className="grid gap-2"><Label>Symbol</Label><Input value={form.symbol} onBlur={handleSymbolBlur} onChange={(e) => setForm({ ...form, symbol: e.target.value.toUpperCase() })} placeholder="VTI" /></div>
               <div className="grid gap-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Vanguard Total Stock" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2"><Label>Asset Class</Label><Select value={form.asset_class} onValueChange={(v) => setForm({ ...form, asset_class: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{ASSET_CLASSES.map(c => <SelectItem key={c} value={c}>{c.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select></div>
               <div className="grid gap-2"><Label>Account</Label><Select value={form.account_id || ""} onValueChange={(v) => { const a = accounts.find(x => x.id === v); setForm({ ...form, account_id: v, account_name: a?.name || "" }); }}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{accounts.filter(a => ["brokerage","retirement_401k","retirement_ira"].includes(a.account_type)).map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select></div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div className="grid gap-2"><Label>Shares</Label><Input type="number" step="0.001" value={form.shares} onChange={(e) => setForm({ ...form, shares: parseFloat(e.target.value) || 0 })} /></div>
+              <div className="grid gap-2"><Label>Live Price</Label><Input readOnly type="number" step="0.01" value={form.current_price} className="read-only:bg-slate-50 read-only:pointer-events-none" /></div>
               <div className="grid gap-2"><Label>Cost Basis ($)</Label><Input type="number" step="0.01" value={form.cost_basis} onChange={(e) => setForm({ ...form, cost_basis: parseFloat(e.target.value) || 0 })} /></div>
-              <div className="grid gap-2"><Label>Current Value ($)</Label><Input type="number" step="0.01" value={form.current_value} onChange={(e) => setForm({ ...form, current_value: parseFloat(e.target.value) || 0 })} /></div>
+              <div className="grid gap-2"><Label>Current Value ($)</Label><Input readOnly type="number" step="0.01" value={form.current_value} className="read-only:bg-slate-50 read-only:pointer-events-none" /></div>
             </div>
           </div>
           <DialogFooter>
