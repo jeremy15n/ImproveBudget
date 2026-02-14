@@ -29,7 +29,7 @@ export default function Import() {
               </div>
               <h3 className="text-sm font-semibold text-slate-900">Security</h3>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed">All uploads are processed securely. Your data is encrypted at rest and in transit. We never share your financial data with third parties.</p>
+            <p className="text-xs text-slate-500 leading-relaxed">All uploads are stored locally so YOU own YOUR data!</p>
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
@@ -50,7 +50,7 @@ export default function Import() {
               <h3 className="text-sm font-semibold text-slate-900">Supported Formats</h3>
             </div>
             <ul className="text-xs text-slate-500 space-y-1.5 mt-2">
-              <li>• <strong>AMEX</strong> — Download CSV from activity page</li>
+              <li>• <strong>AMEX</strong> — Download CSV/XLSX from activity page</li>
               <li>• <strong>USAA</strong> — Export transactions as CSV</li>
               <li>• <strong>Abound CU</strong> — Download statement CSV</li>
               <li>• <strong>PayPal</strong> — Export activity to CSV</li>

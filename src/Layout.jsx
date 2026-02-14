@@ -126,8 +126,8 @@ function SidebarContent({ currentPageName, onClose }) {
       </nav>
 
       <div className="p-4 m-3 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200/60">
-        <p className="text-xs font-medium text-slate-700">Data Security</p>
-        <p className="text-[11px] text-slate-500 mt-0.5">All financial data is encrypted and stored securely.</p>
+        <p className="text-xs font-medium text-slate-700">Data Secured</p>
+        <p className="text-[11px] text-slate-500 mt-0.5">All data is locally stored.</p>
       </div>
     </div>
   );
