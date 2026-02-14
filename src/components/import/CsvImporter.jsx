@@ -32,65 +32,32 @@ export default function CsvImporter({ accounts, onImportComplete }) {
     if (!file || !accountId) return;
     setStatus("uploading");
 
-    // TODO: Implement file upload endpoint
-    // const { file_url } = await apiClient.integrations.uploadFile({ file });
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("account_id", accountId);
 
-    setStatus("processing");
-    const account = accounts.find(a => a.id === accountId);
+      setStatus("processing");
 
-    // TODO: Implement file extraction endpoint
-    // const extracted = await apiClient.integrations.extractData({...});
-    
-    // For now, return error until these endpoints are implemented
-    setStatus("error");
-    setResults({ error: "File upload and extraction endpoints not yet implemented. Please implement /api/upload and /api/extract endpoints." });
-    return;
-
-    // Fetch existing hashes to detect duplicates
-    const existingTx = await apiClient.entities.Transaction.filter({ account_id: accountId }, "-date", 500);
-    const existingHashes = new Set(existingTx.map(t => t.import_hash).filter(Boolean));
-
-    let imported = 0;
-    let duplicates = 0;
-    const batch = [];
-
-    for (const row of rows) {
-      if (!row.date || row.amount === undefined) continue;
-      const hash = generateHash(row);
-      if (existingHashes.has(hash)) {
-        duplicates++;
-        continue;
-      }
-      existingHashes.add(hash);
-
-      const isIncome = row.amount > 0;
-      batch.push({
-        date: row.date,
-        merchant_raw: row.merchant_raw || "",
-        merchant_clean: row.merchant_raw || "",
-        amount: row.amount,
-        category: row.category || "uncategorized",
-        account_id: accountId,
-        account_name: account?.name || "",
-        type: isIncome ? "income" : "expense",
-        is_reviewed: false,
-        is_flagged: false,
-        is_duplicate: false,
-        import_hash: hash,
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+      const response = await fetch(`${baseUrl}/import`, {
+        method: "POST",
+        body: formData,
       });
-      imported++;
-    }
 
-    if (batch.length > 0) {
-      // Bulk create in chunks of 50
-      for (let i = 0; i < batch.length; i += 50) {
-        await apiClient.entities.Transaction.bulkCreate(batch.slice(i, i + 50));
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || data.detail || "Import failed");
       }
-    }
 
-    setStatus("done");
-    setResults({ imported, duplicates, total: rows.length });
-    if (onImportComplete) onImportComplete();
+      setStatus("done");
+      setResults({ imported: data.imported, duplicates: data.duplicates, total: data.total });
+      if (onImportComplete) onImportComplete();
+    } catch (error) {
+      setStatus("error");
+      setResults({ error: error.message });
+    }
   };
 
   return (
