@@ -2,12 +2,12 @@ import React from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Filter } from "lucide-react";
-import { getCategoryLabel } from "../shared/formatters";
+import { useCategories } from "../../hooks/useCategories";
 
-const CATEGORIES = ["all", "housing", "transportation", "food_dining", "groceries", "utilities", "insurance", "healthcare", "debt_payments", "subscriptions", "entertainment", "shopping", "personal_care", "education", "travel", "gifts_donations", "investments", "savings", "income_salary", "income_freelance", "income_investment", "income_other", "transfer", "refund", "fee", "uncategorized"];
 const TYPES = ["all", "income", "expense", "transfer", "refund"];
 
 export default function TransactionFilters({ filters, setFilters, accounts }) {
+  const { categoryList, getCategoryLabel } = useCategories();
   return (
     <div className="bg-white rounded-2xl border border-slate-200/60 p-4 mb-4">
       <div className="flex flex-wrap gap-3">
@@ -22,7 +22,10 @@ export default function TransactionFilters({ filters, setFilters, accounts }) {
         </div>
         <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
           <SelectTrigger className="w-[160px]"><Filter className="w-3.5 h-3.5 mr-2 text-slate-400" /><SelectValue placeholder="Category" /></SelectTrigger>
-          <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c === "all" ? "All Categories" : getCategoryLabel(c)}</SelectItem>)}</SelectContent>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categoryList.map((c) => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}
+          </SelectContent>
         </Select>
         <Select value={filters.type} onValueChange={(v) => setFilters({ ...filters, type: v })}>
           <SelectTrigger className="w-[130px]"><SelectValue placeholder="Type" /></SelectTrigger>

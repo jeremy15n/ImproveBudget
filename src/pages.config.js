@@ -57,6 +57,7 @@ import Goals from './pages/Goals';
 import Import from './pages/Import';
 import Rules from './pages/Rules';
 import Documentation from './pages/Documentation';
+import Settings from './pages/Settings';
 import __Layout from './Layout.jsx';
 
 
@@ -70,6 +71,7 @@ export const PAGES = {
     "Goals": Goals,
     "Import": Import,
     "Rules": Rules,
+    "Settings": Settings,
     "Documentation": Documentation,
 }
 

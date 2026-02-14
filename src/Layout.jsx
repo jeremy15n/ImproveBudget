@@ -4,7 +4,7 @@ import { createPageUrl } from "./utils";
 import {
   LayoutDashboard, ArrowLeftRight, Wallet, PieChart, TrendingUp,
   Target, LineChart, Upload, Settings, BookOpen, Menu, X, ChevronRight,
-  DollarSign
+  DollarSign, Palette
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +18,7 @@ const navItems = [
   { name: "Goals", icon: Target, page: "Goals" },
   { name: "Import", icon: Upload, page: "Import" },
   { name: "Rules", icon: Settings, page: "Rules" },
+  { name: "Categories", icon: Palette, page: "Settings" },
   { name: "Docs", icon: BookOpen, page: "Documentation" },
 ];
 
@@ -52,7 +53,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center">
             <DollarSign className="w-4 h-4 text-white" />
           </div>
-          <span className="font-semibold text-slate-900 tracking-tight">Monarch</span>
+          <span className="font-semibold text-slate-900 tracking-tight">BetterBudget</span>
         </div>
         <div className="w-9" />
       </div>
@@ -90,7 +91,7 @@ function SidebarContent({ currentPageName, onClose }) {
             <DollarSign className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-slate-900 tracking-tight text-lg">Monarch</h1>
+            <h1 className="font-bold text-slate-900 tracking-tight text-lg">BetterBudget</h1>
             <p className="text-[11px] text-slate-400 -mt-0.5">Personal Finance</p>
           </div>
         </div>

@@ -246,18 +246,22 @@ export class CSVService {
    */
   parseAmex(row) {
     const date = row['Date'];
-    const amount = this.parseAmount(row['Amount']);
+    const rawAmount = this.parseAmount(row['Amount']);
 
-    if (!date || isNaN(amount)) return null;
+    if (!date || isNaN(rawAmount)) return null;
 
     // Use Description or fall back to "Appears On Your Statement As"
     const description = row['Description'] || row['Appears On Your Statement As'] || '';
+
+    // AMEX: positive amounts = charges (expenses), negative = payments/credits
+    // Negate so charges become negative (app convention: negative = expense)
+    const amount = -rawAmount;
 
     return {
       date: date,
       merchant_raw: description,
       amount: amount,
-      type: amount > 0 ? 'payment' : 'expense',
+      type: amount < 0 ? 'expense' : 'income',
       category: row['Category'] || 'uncategorized'
     };
   }

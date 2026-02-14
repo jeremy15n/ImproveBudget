@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { getCategoryLabel } from "../shared/formatters";
+import { useCategories } from "../../hooks/useCategories";
 
-const CATEGORIES = ["housing", "transportation", "food_dining", "groceries", "utilities", "insurance", "healthcare", "debt_payments", "subscriptions", "entertainment", "shopping", "personal_care", "education", "travel", "gifts_donations", "investments", "savings", "income_salary", "income_freelance", "income_investment", "income_other", "transfer", "refund", "fee", "uncategorized"];
 const TYPES = ["income", "expense", "transfer", "refund"];
 
 export default function TransactionEditDialog({ transaction, open, onClose, onSave, accounts }) {
+  const { categoryList, getCategoryLabel } = useCategories();
   const [form, setForm] = useState({});
 
   useEffect(() => {
@@ -47,7 +47,12 @@ export default function TransactionEditDialog({ transaction, open, onClose, onSa
             </div>
             <div className="grid gap-2">
               <Label>Type</Label>
-              <Select value={form.type || "expense"} onValueChange={(v) => setForm({ ...form, type: v })}>
+              <Select value={form.type || "expense"} onValueChange={(v) => {
+                let newAmount = form.amount || 0;
+                if (v === 'expense' && newAmount > 0) newAmount = -Math.abs(newAmount);
+                if (v === 'income' && newAmount < 0) newAmount = Math.abs(newAmount);
+                setForm({ ...form, type: v, amount: newAmount });
+              }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{TYPES.map((t) => <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}</SelectContent>
               </Select>
@@ -58,7 +63,7 @@ export default function TransactionEditDialog({ transaction, open, onClose, onSa
               <Label>Category</Label>
               <Select value={form.category || "uncategorized"} onValueChange={(v) => setForm({ ...form, category: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}</SelectContent>
+                <SelectContent>{categoryList.map((c) => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">

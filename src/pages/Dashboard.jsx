@@ -9,6 +9,7 @@ import CashFlowChart from "../components/dashboard/CashFlowChart";
 import CategoryBreakdown from "../components/dashboard/CategoryBreakdown";
 import RecentTransactions from "../components/dashboard/RecentTransactions";
 import AccountsSummary from "../components/dashboard/AccountsSummary";
+import IncomeBreakdown from "../components/dashboard/IncomeBreakdown";
 import { formatCurrency } from "../components/shared/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -58,11 +59,12 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-        <div className="lg:col-span-2">
-          <CashFlowChart transactions={transactions} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <CashFlowChart transactions={transactions} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+          <IncomeBreakdown transactions={transactions} />
+          <CategoryBreakdown transactions={transactions} />
         </div>
-        <CategoryBreakdown transactions={transactions} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

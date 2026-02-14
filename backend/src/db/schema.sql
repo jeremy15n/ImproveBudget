@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   flag_reason TEXT,
   notes TEXT,
   tags TEXT,
-  import_hash TEXT UNIQUE,
+  import_hash TEXT,
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE SET NULL
@@ -81,6 +81,20 @@ CREATE TABLE IF NOT EXISTS budgets (
 CREATE INDEX IF NOT EXISTS idx_budgets_month ON budgets(month);
 CREATE INDEX IF NOT EXISTS idx_budgets_category ON budgets(category);
 CREATE INDEX IF NOT EXISTS idx_budgets_is_active ON budgets(is_active);
+
+-- Categories table - customizable spending categories
+CREATE TABLE IF NOT EXISTS categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  label TEXT NOT NULL,
+  color TEXT DEFAULT '#cbd5e1',
+  is_default INTEGER DEFAULT 1,
+  sort_order INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(name);
+CREATE INDEX IF NOT EXISTS idx_categories_sort_order ON categories(sort_order);
 
 -- Category Rules table - for auto-categorization
 CREATE TABLE IF NOT EXISTS categoryrules (

@@ -10,15 +10,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Progress } from "@/components/ui/progress";
 import PageHeader from "../components/shared/PageHeader";
 import EmptyState from "../components/shared/EmptyState";
-import { formatCurrency, getCategoryLabel, CATEGORY_COLORS } from "../components/shared/formatters";
+import { formatCurrency } from "../components/shared/formatters";
+import { useCategories } from "../hooks/useCategories";
 import moment from "moment";
 
-const BUDGET_CATEGORIES = ["housing", "transportation", "food_dining", "groceries", "utilities", "insurance", "healthcare", "debt_payments", "subscriptions", "entertainment", "shopping", "personal_care", "education", "travel", "gifts_donations", "investments", "savings", "fee", "uncategorized"];
-
 export default function Budget() {
+  const { categoryList, categoryColors, getCategoryLabel } = useCategories();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ category: "groceries", monthly_limit: 0 });
+  const currentMonth = moment().format("YYYY-MM");
+  const [form, setForm] = useState({ category: "groceries", monthly_limit: 0, month: currentMonth });
   const qc = useQueryClient();
 
   const { data: budgets = [], isLoading: loadingBudgets } = useQuery({
@@ -43,9 +44,7 @@ export default function Budget() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["budgets"] }),
   });
 
-  const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm({ category: "groceries", monthly_limit: 0 }); };
-
-  const currentMonth = moment().format("YYYY-MM");
+  const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm({ category: "groceries", monthly_limit: 0, month: currentMonth }); };
   const monthExpenses = useMemo(() => {
     const map = {};
     transactions
@@ -80,7 +79,7 @@ export default function Budget() {
               <div key={b.id} className="bg-white rounded-2xl border border-slate-200/60 p-5 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[b.category] || "#cbd5e1" }} />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: categoryColors[b.category] || "#cbd5e1" }} />
                     <span className="text-sm font-semibold text-slate-900">{getCategoryLabel(b.category)}</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -90,7 +89,7 @@ export default function Budget() {
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMut.mutate(b.id)}><Trash2 className="w-3.5 h-3.5 text-red-400" /></Button>
                   </div>
                 </div>
-                <Progress value={Math.min(pct, 100)} className="h-2" style={{ "--progress-color": isOver ? "#ef4444" : CATEGORY_COLORS[b.category] || "#6366f1" }} />
+                <Progress value={Math.min(pct, 100)} className="h-2" style={{ "--progress-color": isOver ? "#ef4444" : categoryColors[b.category] || "#6366f1" }} />
                 <div className="flex justify-between mt-2">
                   <span className="text-[11px] text-slate-400">{pct.toFixed(0)}% used</span>
                   <span className={`text-[11px] font-medium ${isOver ? "text-red-500" : "text-emerald-600"}`}>
@@ -111,7 +110,7 @@ export default function Budget() {
               <Label>Category</Label>
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{BUDGET_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}</SelectContent>
+                <SelectContent>{categoryList.map((c) => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid gap-2">

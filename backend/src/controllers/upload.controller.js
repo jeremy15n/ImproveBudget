@@ -142,35 +142,16 @@ export const importTransactions = async (req, res, next) => {
     // Extract transactions
     const transactions = csvService.extractTransactions(data, headers, parseInt(account_id));
 
-    // Check for duplicates
-    const existingTx = dbService.list('transaction', { account_id }, { sort_by: 'date', sort_order: 'desc' }, 1000);
-    const existingHashes = new Set(existingTx.map(t => t.import_hash).filter(Boolean));
+    // Prepare batch for insert (no duplicate checking)
+    const batch = transactions.map(tx => ({
+      ...tx,
+      import_hash: csvService.generateHash(tx),
+      is_reviewed: false,
+      is_flagged: false,
+      is_duplicate: false
+    }));
 
-    let imported = 0;
-    let duplicates = 0;
-    const batch = [];
-
-    for (const tx of transactions) {
-      const hash = csvService.generateHash(tx);
-
-      if (existingHashes.has(hash)) {
-        duplicates++;
-        continue;
-      }
-
-      existingHashes.add(hash);
-      batch.push({
-        ...tx,
-        import_hash: hash,
-        is_reviewed: false,
-        is_flagged: false,
-        is_duplicate: false
-      });
-
-      imported++;
-    }
-
-    // Bulk insert if any valid transactions
+    // Bulk insert all transactions
     let insertedIds = [];
     if (batch.length > 0) {
       const result = dbService.bulkCreate('transaction', batch);
@@ -178,8 +159,8 @@ export const importTransactions = async (req, res, next) => {
     }
 
     res.status(201).json({
-      imported,
-      duplicates,
+      imported: batch.length,
+      duplicates: 0,
       total: data.length,
       ids: insertedIds
     });

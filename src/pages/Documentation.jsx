@@ -7,9 +7,9 @@ const sections = [
   {
     title: "Getting Started",
     content: `
-## Welcome to Monarch — Your Personal Finance Command Center
+## Welcome to BetterBudget — Your Personal Finance Command Center
 
-Monarch gives you **full visibility** into every dollar you earn, spend, save, and invest across all your financial accounts.
+BetterBudget gives you **full visibility** into every dollar you earn, spend, save, and invest across all your financial accounts.
 
 ### Quick Start (5 minutes)
 
@@ -18,43 +18,6 @@ Monarch gives you **full visibility** into every dollar you earn, spend, save, a
 3. **Set up rules** — Go to **Rules** and create auto-categorization rules for recurring merchants.
 4. **Create budgets** — Go to **Budget** and set monthly spending limits by category.
 5. **Set goals** — Go to **Goals** and define your financial independence targets.
-`
-  },
-  {
-    title: "Plaid Integration (Auto-Sync)",
-    content: `
-## Automatic Bank Syncing with Plaid
-
-### Setup Required
-To enable automatic transaction syncing, you need to:
-1. Configure your backend to support Plaid integration
-2. Enable **Backend Functions** in your deployment
-3. Return to the app and a Plaid integration option will appear
-
-### Supported Institutions
-Once backend functions are enabled, Plaid can auto-sync:
-- **USAA** — Credit cards
-- **Fidelity** — Individual brokerage accounts
-- **Schwab** — Roth IRA, Traditional IRA, brokerage accounts
-- **Abound Credit Union** — Checking & savings
-- **PayPal** — Savings accounts
-- **AMEX** — All credit cards
-
-### How It Works
-1. Click "Connect Bank" in the Import page
-2. Search for your institution
-3. Log in securely through Plaid (bank credentials never stored in Monarch)
-4. Select accounts to sync
-5. Transactions automatically import daily
-
-### Security
-- Bank-level encryption (same as your bank's website)
-- Plaid is used by Venmo, Robinhood, and major fintech apps
-- Read-only access (no money movement possible)
-- You can disconnect at any time
-
-### Fallback to CSV
-If Plaid doesn't support your bank or you prefer manual control, CSV import remains available.
 `
   },
   {
@@ -133,7 +96,7 @@ The import system uses AI to parse any CSV or Excel format from your bank. Here'
 1. Log in to your bank's website
 2. Navigate to the transactions/activity section
 3. Download as CSV or Excel
-4. In Monarch, go to **Import** → select the account → upload the file
+4. In BetterBudget, go to **Import** → select the account → upload the file
 
 ### How Each Bank Exports
 
@@ -225,13 +188,13 @@ For your strong income at 26, consider:
 
 ### High-Level Architecture
 \`\`\`
-[Bank Exports/Plaid] → [AI Parser] → [Duplicate Detection] → [Database]
+[Bank Exports] → [AI Parser] → [Duplicate Detection] → [Database]
                                                                     ↓
 [Dashboard] ← [Query Engine] ← [Rule Engine] ← [Categorization Rules]
 \`\`\`
 
 ### Data Flow
-1. **Ingestion**: CSV files uploaded OR Plaid auto-sync → AI extracts structured data
+1. **Ingestion**: CSV files uploaded → AI extracts structured data
 2. **Processing**: Duplicate detection → Rule-based categorization → Type classification
 3. **Storage**: Encrypted database with standardized transaction schema
 4. **Presentation**: Real-time dashboards, charts, and reports
@@ -247,8 +210,7 @@ For your strong income at 26, consider:
 
 ### Security
 - All data encrypted at rest and in transit
-- Plaid uses bank-level security (OAuth + tokenization)
-- No bank credentials stored in Monarch
+- No bank credentials stored in BetterBudget
 - Hashed transaction fingerprints (never raw account numbers)
 - Only last 4 digits of account numbers stored
 

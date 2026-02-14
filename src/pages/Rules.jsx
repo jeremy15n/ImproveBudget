@@ -10,15 +10,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import PageHeader from "../components/shared/PageHeader";
 import EmptyState from "../components/shared/EmptyState";
-import { getCategoryLabel, CATEGORY_COLORS } from "../components/shared/formatters";
+import { useCategories } from "../hooks/useCategories";
 import { toast } from "sonner";
 
-const CATEGORIES = ["housing", "transportation", "food_dining", "groceries", "utilities", "insurance", "healthcare", "debt_payments", "subscriptions", "entertainment", "shopping", "personal_care", "education", "travel", "gifts_donations", "investments", "savings", "income_salary", "income_freelance", "income_investment", "income_other", "transfer", "refund", "fee", "uncategorized"];
 const MATCH_TYPES = ["contains", "starts_with", "exact"];
 
 const emptyRule = { match_pattern: "", match_type: "contains", category: "uncategorized", merchant_clean_name: "", priority: 0 };
 
 export default function Rules() {
+  const { categoryList, categoryColors, getCategoryLabel } = useCategories();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyRule);
@@ -47,32 +47,59 @@ export default function Rules() {
 
   const runRules = async () => {
     setRunning(true);
-    const transactions = await apiClient.entities.Transaction.filter({ category: "uncategorized" }, "-date", 500);
-    let matched = 0;
+    try {
+      // Fetch ALL transactions (not just uncategorized) so rules can fix wrong categories too
+      let allTransactions = [];
+      let offset = 0;
+      const batchSize = 500;
+      while (true) {
+        const batch = await apiClient.entities.Transaction.list("-date", batchSize);
+        allTransactions = allTransactions.concat(batch);
+        if (batch.length < batchSize) break;
+        offset += batchSize;
+        // Simple pagination guard - fetch up to 5000 max
+        if (offset >= 5000) break;
+      }
 
-    for (const tx of transactions) {
-      const merchant = (tx.merchant_raw || tx.merchant_clean || "").toLowerCase();
-      for (const rule of rules) {
-        if (!rule.is_active && rule.is_active !== undefined) continue;
-        const pattern = rule.match_pattern.toLowerCase();
-        let isMatch = false;
-        if (rule.match_type === "contains") isMatch = merchant.includes(pattern);
-        else if (rule.match_type === "starts_with") isMatch = merchant.startsWith(pattern);
-        else if (rule.match_type === "exact") isMatch = merchant === pattern;
+      // Sort rules by priority (highest first)
+      const activeRules = rules
+        .filter(r => r.is_active !== 0)
+        .sort((a, b) => (b.priority || 0) - (a.priority || 0));
 
-        if (isMatch) {
-          const update = { category: rule.category };
-          if (rule.merchant_clean_name) update.merchant_clean = rule.merchant_clean_name;
-          await apiClient.entities.Transaction.update(tx.id, update);
-          matched++;
-          break;
+      let matched = 0;
+
+      for (const tx of allTransactions) {
+        const merchant = (tx.merchant_raw || tx.merchant_clean || tx.description || "").toLowerCase();
+        for (const rule of activeRules) {
+          const pattern = rule.match_pattern.toLowerCase();
+          let isMatch = false;
+          if (rule.match_type === "contains") isMatch = merchant.includes(pattern);
+          else if (rule.match_type === "starts_with") isMatch = merchant.startsWith(pattern);
+          else if (rule.match_type === "exact") isMatch = merchant === pattern;
+
+          if (isMatch) {
+            // Check if anything actually needs to change
+            const needsCategoryUpdate = tx.category !== rule.category;
+            const needsNameUpdate = rule.merchant_clean_name && tx.merchant_clean !== rule.merchant_clean_name;
+
+            if (needsCategoryUpdate || needsNameUpdate) {
+              const update = {};
+              if (needsCategoryUpdate) update.category = rule.category;
+              if (needsNameUpdate) update.merchant_clean = rule.merchant_clean_name;
+              await apiClient.entities.Transaction.update(tx.id, update);
+              matched++;
+            }
+            break;
+          }
         }
       }
-    }
 
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success(`Updated ${matched} transaction${matched !== 1 ? "s" : ""} across ${allTransactions.length} total`);
+    } catch (err) {
+      toast.error(`Failed to run rules: ${err.message}`);
+    }
     setRunning(false);
-    qc.invalidateQueries({ queryKey: ["transactions"] });
-    toast.success(`Applied rules to ${matched} of ${transactions.length} uncategorized transactions`);
   };
 
   return (
@@ -102,7 +129,7 @@ export default function Rules() {
                   <span className="text-sm font-medium text-slate-800">"{r.match_pattern}"</span>
                   <Badge variant="outline" className="text-[10px]">{r.match_type}</Badge>
                   <span className="text-slate-300">→</span>
-                  <Badge style={{ backgroundColor: `${CATEGORY_COLORS[r.category] || "#cbd5e1"}20`, color: CATEGORY_COLORS[r.category] || "#64748b" }} className="text-[10px]">{getCategoryLabel(r.category)}</Badge>
+                  <Badge style={{ backgroundColor: `${categoryColors[r.category] || "#cbd5e1"}20`, color: categoryColors[r.category] || "#64748b" }} className="text-[10px]">{getCategoryLabel(r.category)}</Badge>
                   {r.merchant_clean_name && <span className="text-xs text-slate-400">as "{r.merchant_clean_name}"</span>}
                 </div>
               </div>
@@ -125,7 +152,7 @@ export default function Rules() {
               <div className="grid gap-2"><Label>Match Type</Label><Select value={form.match_type} onValueChange={(v) => setForm({ ...form, match_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{MATCH_TYPES.map(m => <SelectItem key={m} value={m}>{m.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2"><Label>Category</Label><Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}</SelectContent></Select></div>
+              <div className="grid gap-2"><Label>Category</Label><Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{categoryList.map(c => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}</SelectContent></Select></div>
               <div className="grid gap-2"><Label>Clean Name (optional)</Label><Input value={form.merchant_clean_name || ""} onChange={(e) => setForm({ ...form, merchant_clean_name: e.target.value })} placeholder="e.g., Netflix" /></div>
             </div>
             <div className="grid gap-2 w-32"><Label>Priority</Label><Input type="number" value={form.priority || 0} onChange={(e) => setForm({ ...form, priority: parseInt(e.target.value) || 0 })} /></div>

@@ -1,13 +1,23 @@
 import React from "react";
-import { formatCurrency, getCategoryLabel, CATEGORY_COLORS } from "../shared/formatters";
+import { formatCurrency } from "../shared/formatters";
+import { useCategories } from "../../hooks/useCategories";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Flag, Check, ArrowLeftRight, AlertTriangle, RotateCw } from "lucide-react";
+import { Pencil, Flag, Check, ArrowLeftRight, AlertTriangle, RotateCw, Trash2 } from "lucide-react";
 import moment from "moment";
 
-export default function TransactionRow({ transaction: t, onEdit, onToggleReview, onToggleFlag }) {
+export default function TransactionRow({ transaction: t, onEdit, onToggleReview, onToggleFlag, onDelete, selected, onToggleSelect }) {
+  const { categoryColors, getCategoryLabel } = useCategories();
   return (
-    <div className={`flex items-center gap-3 py-3 px-3 rounded-xl hover:bg-slate-50 transition-colors ${t.is_duplicate ? "opacity-50" : ""} ${t.is_flagged ? "border-l-2 border-amber-400" : ""}`}>
+    <div className={`flex items-center gap-3 py-3 px-3 rounded-xl hover:bg-slate-50 transition-colors ${t.is_duplicate ? "opacity-50" : ""} ${t.is_flagged ? "border-l-2 border-amber-400" : ""} ${selected ? "bg-indigo-50" : ""}`}>
+      {onToggleSelect && (
+        <input
+          type="checkbox"
+          checked={selected || false}
+          onChange={() => onToggleSelect(t.id)}
+          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 shrink-0 cursor-pointer"
+        />
+      )}
       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
         t.is_transfer ? "bg-slate-100" :
         t.amount > 0 ? "bg-emerald-50" : "bg-red-50"
@@ -34,7 +44,7 @@ export default function TransactionRow({ transaction: t, onEdit, onToggleReview,
       <Badge
         variant="secondary"
         className="text-[10px] shrink-0"
-        style={{ backgroundColor: `${CATEGORY_COLORS[t.category] || "#cbd5e1"}20`, color: CATEGORY_COLORS[t.category] || "#64748b" }}
+        style={{ backgroundColor: `${categoryColors[t.category] || "#cbd5e1"}20`, color: categoryColors[t.category] || "#64748b" }}
       >
         {getCategoryLabel(t.category)}
       </Badge>
@@ -53,6 +63,11 @@ export default function TransactionRow({ transaction: t, onEdit, onToggleReview,
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEdit(t)}>
           <Pencil className="w-3.5 h-3.5 text-slate-400" />
         </Button>
+        {onDelete && (
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDelete(t)}>
+            <Trash2 className="w-3.5 h-3.5 text-red-400 hover:text-red-600" />
+          </Button>
+        )}
       </div>
     </div>
   );

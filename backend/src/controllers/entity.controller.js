@@ -136,6 +136,61 @@ export const updateEntity = (req, res, next) => {
 };
 
 /**
+ * Bulk update entities
+ * PUT /api/{entity}/bulk-update
+ * Body: { ids: [...], data: { field: value } }
+ */
+export const bulkUpdateEntities = (req, res, next) => {
+  try {
+    const { table } = req;
+    const { ids, data } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        error: true,
+        message: 'ids array is required'
+      });
+    }
+
+    if (!data || Object.keys(data).length === 0) {
+      return res.status(400).json({
+        error: true,
+        message: 'Update data is required'
+      });
+    }
+
+    const result = dbService.bulkUpdate(table, ids, data);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Bulk delete entities
+ * POST /api/{entity}/bulk-delete
+ * Body: { ids: [...] }
+ */
+export const bulkDeleteEntities = (req, res, next) => {
+  try {
+    const { table } = req;
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        error: true,
+        message: 'ids array is required'
+      });
+    }
+
+    const result = dbService.bulkDelete(table, ids);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Delete an entity
  * DELETE /api/{entity}/{id}
  */

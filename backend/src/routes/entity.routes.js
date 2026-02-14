@@ -4,6 +4,8 @@ import {
   getEntity,
   createEntity,
   bulkCreateEntities,
+  bulkUpdateEntities,
+  bulkDeleteEntities,
   updateEntity,
   deleteEntity
 } from '../controllers/entity.controller.js';
@@ -16,6 +18,7 @@ const VALID_ENTITIES = [
   'account',
   'budget',
   'categoryrule',
+  'category',
   'financialgoal',
   'investment',
   'networthsnapshot'
@@ -56,6 +59,12 @@ router.post('/:entity', validateEntity, createEntity);
 
 // Bulk create entities
 router.post('/:entity/bulk', validateEntity, bulkCreateEntities);
+
+// Bulk update entities
+router.put('/:entity/bulk-update', validateEntity, bulkUpdateEntities);
+
+// Bulk delete entities
+router.post('/:entity/bulk-delete', validateEntity, bulkDeleteEntities);
 
 // Update entity
 router.put('/:entity/:id', validateEntity, updateEntity);

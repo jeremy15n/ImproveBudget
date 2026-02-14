@@ -158,6 +158,54 @@ export class DatabaseService {
   }
 
   /**
+   * Update multiple records by IDs
+   */
+  bulkUpdate(table, ids, data) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return { updated: 0 };
+    }
+
+    try {
+      const columns = Object.keys(data);
+      const setClause = columns.map(c => `${this.escapeColumnName(c)} = ?`).join(', ');
+      const values = Object.values(data);
+
+      const hasTimestamp = this.hasColumn(table, 'updated_at');
+      const placeholders = ids.map(() => '?').join(', ');
+      const query = `
+        UPDATE ${this.escapeTableName(table)}
+        SET ${setClause}${hasTimestamp ? ', updated_at = datetime("now")' : ''}
+        WHERE id IN (${placeholders})
+      `;
+
+      const stmt = this.db.prepare(query);
+      stmt.run(...values, ...ids);
+
+      return { updated: ids.length };
+    } catch (error) {
+      throw new Error(`Failed to bulk update ${table}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Delete multiple records by IDs
+   */
+  bulkDelete(table, ids) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return { deleted: 0 };
+    }
+
+    try {
+      const placeholders = ids.map(() => '?').join(', ');
+      const stmt = this.db.prepare(`DELETE FROM ${this.escapeTableName(table)} WHERE id IN (${placeholders})`);
+      stmt.run(...ids);
+      return { deleted: ids.length };
+    } catch (error) {
+      throw new Error(`Failed to bulk delete from ${table}: ${error.message}`);
+    }
+  }
+
+  /**
    * Delete a record by ID
    * @param {string} table - Table name
    * @param {number} id - Record ID
@@ -223,6 +271,7 @@ export class DatabaseService {
       'account': 'accounts',
       'budget': 'budgets',
       'categoryrule': 'categoryrules',
+      'category': 'categories',
       'financialgoal': 'financialgoals',
       'investment': 'investments',
       'networthsnapshot': 'networthsnapshots'

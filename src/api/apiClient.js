@@ -89,6 +89,16 @@ class Entity {
     const url = `${this.endpoint}/bulk`;
     return this.request('POST', url, { items });
   }
+
+  async bulkUpdate(ids, data) {
+    const url = `${this.endpoint}/bulk-update`;
+    return this.request('PUT', url, { ids, data });
+  }
+
+  async bulkDelete(ids) {
+    const url = `${this.endpoint}/bulk-delete`;
+    return this.request('POST', url, { ids });
+  }
 }
 
 class APIClient {
@@ -97,6 +107,7 @@ class APIClient {
     this.entities = {
       Transaction: new Entity('Transaction', this.baseUrl),
       Account: new Entity('Account', this.baseUrl),
+      Category: new Entity('Category', this.baseUrl),
       CategoryRule: new Entity('CategoryRule', this.baseUrl),
       NetWorthSnapshot: new Entity('NetWorthSnapshot', this.baseUrl),
       Investment: new Entity('Investment', this.baseUrl),
@@ -111,6 +122,7 @@ class APIClient {
     this.entities = {
       Transaction: new Entity('Transaction', this.baseUrl),
       Account: new Entity('Account', this.baseUrl),
+      Category: new Entity('Category', this.baseUrl),
       CategoryRule: new Entity('CategoryRule', this.baseUrl),
       NetWorthSnapshot: new Entity('NetWorthSnapshot', this.baseUrl),
       Investment: new Entity('Investment', this.baseUrl),
