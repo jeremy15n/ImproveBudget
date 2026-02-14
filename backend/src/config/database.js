@@ -62,6 +62,7 @@ const saveToDisk = (sqlDb) => {
 class DatabaseWrapper {
   constructor(sqlDb) {
     this.sqlDb = sqlDb;
+    this.inTransaction = false;
   }
 
   prepare(sql) {
@@ -76,10 +77,11 @@ class DatabaseWrapper {
           const lastId = self.sqlDb.exec('SELECT last_insert_rowid() as id');
           stmt.free();
 
-          // Save after write operations
-          if (sql.trim().toUpperCase().startsWith('INSERT') ||
-              sql.trim().toUpperCase().startsWith('UPDATE') ||
-              sql.trim().toUpperCase().startsWith('DELETE')) {
+          // Save after write operations (but not during a transaction)
+          if (!self.inTransaction &&
+              (sql.trim().toUpperCase().startsWith('INSERT') ||
+               sql.trim().toUpperCase().startsWith('UPDATE') ||
+               sql.trim().toUpperCase().startsWith('DELETE'))) {
             saveToDisk(self.sqlDb);
           }
 
@@ -124,7 +126,7 @@ class DatabaseWrapper {
 
   pragma(pragma) {
     try {
-      this.sqlDb.run(`PRAGMA ${pragma}`);
+      this.sqlDb.exec(`PRAGMA ${pragma}`);
     } catch (error) {
       console.warn(`Pragma ${pragma} not fully supported in sql.js`);
     }
@@ -134,13 +136,16 @@ class DatabaseWrapper {
     const self = this;
     return () => {
       try {
-        self.sqlDb.run('BEGIN TRANSACTION');
+        self.inTransaction = true;
+        self.sqlDb.exec('BEGIN TRANSACTION');
         fn();
-        self.sqlDb.run('COMMIT');
+        self.sqlDb.exec('COMMIT');
+        self.inTransaction = false;
         saveToDisk(self.sqlDb);
       } catch (error) {
+        self.inTransaction = false;
         try {
-          self.sqlDb.run('ROLLBACK');
+          self.sqlDb.exec('ROLLBACK');
         } catch (rollbackError) {
           console.error('Rollback failed:', rollbackError);
         }
@@ -182,7 +187,7 @@ const initializeDatabase = async () => {
       for (const statement of statements) {
         if (statement.trim()) {
           try {
-            db.sqlDb.run(statement);
+            db.sqlDb.exec(statement);
           } catch (error) {
             console.error(`Error executing statement: ${error.message}`);
             console.error(`Statement: ${statement.slice(0, 100)}...`);

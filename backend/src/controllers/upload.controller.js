@@ -19,16 +19,6 @@ export const uploadFile = (req, res, next) => {
 
     const { originalname, size, mimetype, buffer } = req.file;
 
-    // Validate file type
-    const validTypes = ['text/csv', 'text/plain', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-    if (!validTypes.some(type => mimetype.includes(type)) && !originalname.endsWith('.csv')) {
-      return res.status(400).json({
-        error: true,
-        message: 'Invalid file type',
-        detail: 'Please upload a CSV file'
-      });
-    }
-
     // Validate file size (10MB max)
     const maxSize = parseInt(process.env.MAX_FILE_SIZE || 10485760);
     if (size > maxSize) {
@@ -42,10 +32,10 @@ export const uploadFile = (req, res, next) => {
     // Generate file ID
     const fileId = `file_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Store file temporarily
+    // Store raw buffer (needed for XLSX) and filename
     uploadedFiles.set(fileId, {
       filename: originalname,
-      content: buffer.toString('utf8'),
+      buffer: buffer,
       mimetype,
       size,
       uploadedAt: new Date()
@@ -68,7 +58,7 @@ export const uploadFile = (req, res, next) => {
 };
 
 /**
- * Extract and parse CSV data
+ * Extract and parse CSV/XLSX data
  * POST /api/extract
  */
 export const extractData = async (req, res, next) => {
@@ -82,7 +72,6 @@ export const extractData = async (req, res, next) => {
       });
     }
 
-    // Get uploaded file
     const uploadedFile = uploadedFiles.get(file_id);
     if (!uploadedFile) {
       return res.status(404).json({
@@ -92,23 +81,18 @@ export const extractData = async (req, res, next) => {
       });
     }
 
-    // Parse CSV
-    const { headers, data } = await csvService.parseCSV(uploadedFile.content);
+    const { headers, data } = await csvService.parseFile(uploadedFile.buffer, uploadedFile.filename);
 
     if (!headers || !data || data.length === 0) {
       return res.status(400).json({
         error: true,
-        message: 'Empty or invalid CSV file'
+        message: 'Empty or invalid file'
       });
     }
 
-    // Detect bank format
     const format = csvService.detectBankFormat(headers);
-
-    // Extract transactions
     const transactions = csvService.extractTransactions(data, headers, parseInt(account_id));
 
-    // Add import hashes
     const transactionsWithHashes = transactions.map(tx => ({
       ...tx,
       import_hash: csvService.generateHash(tx)
@@ -145,14 +129,13 @@ export const importTransactions = async (req, res, next) => {
       });
     }
 
-    // Parse CSV
-    const csvContent = req.file.buffer.toString('utf8');
-    const { headers, data } = await csvService.parseCSV(csvContent);
+    // Parse file (CSV or XLSX)
+    const { headers, data } = await csvService.parseFile(req.file.buffer, req.file.originalname);
 
     if (!headers || !data || data.length === 0) {
       return res.status(400).json({
         error: true,
-        message: 'Empty or invalid CSV file'
+        message: 'Empty or invalid file'
       });
     }
 
@@ -160,7 +143,7 @@ export const importTransactions = async (req, res, next) => {
     const transactions = csvService.extractTransactions(data, headers, parseInt(account_id));
 
     // Check for duplicates
-    const existingTx = dbService.list('transaction', { account_id }, { sort_by: '-date' }, 1000);
+    const existingTx = dbService.list('transaction', { account_id }, { sort_by: 'date', sort_order: 'desc' }, 1000);
     const existingHashes = new Set(existingTx.map(t => t.import_hash).filter(Boolean));
 
     let imported = 0;

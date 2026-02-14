@@ -26,9 +26,10 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API routes
-app.use('/api', entityRoutes);
+// API routes - upload routes must be registered first to avoid
+// being caught by the generic /:entity pattern in entity routes
 app.use('/api', uploadRoutes);
+app.use('/api', entityRoutes);
 
 // Serve frontend in production (when built frontend is available)
 if (process.env.NODE_ENV === 'production') {
