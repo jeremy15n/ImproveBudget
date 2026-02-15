@@ -59,6 +59,7 @@ export default function Import() {
               <li>• <strong>PayPal</strong> — Export activity to CSV</li>
               <li>• <strong>Fidelity</strong> — Download positions or activity</li>
               <li>• <strong>Schwab</strong> — Export from transactions tab</li>
+              <li>• <strong>Legacy Data</strong> — CSV without account linking</li>
             </ul>
           </div>
         </div>

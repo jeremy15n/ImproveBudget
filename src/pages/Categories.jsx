@@ -116,17 +116,15 @@ export default function Categories() {
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(cat)}>
                   <Pencil className="w-3.5 h-3.5 text-slate-400" />
                 </Button>
-                {!cat.is_default && (
-                  deleteConfirm === cat.id ? (
-                    <div className="flex items-center gap-1">
-                      <Button size="sm" className="h-6 text-[10px] bg-red-600 hover:bg-red-700 px-2" onClick={() => deleteMut.mutate(cat.id)}>Delete</Button>
-                      <Button variant="outline" size="sm" className="h-6 text-[10px] px-2" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
-                    </div>
-                  ) : (
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteConfirm(cat.id)}>
-                      <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                    </Button>
-                  )
+                {deleteConfirm === cat.id ? (
+                  <div className="flex items-center gap-1">
+                    <Button size="sm" className="h-6 text-[10px] bg-red-600 hover:bg-red-700 px-2" onClick={() => deleteMut.mutate(cat.id)}>Delete</Button>
+                    <Button variant="outline" size="sm" className="h-6 text-[10px] px-2" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+                  </div>
+                ) : (
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteConfirm(cat.id)}>
+                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                  </Button>
                 )}
               </div>
             </div>

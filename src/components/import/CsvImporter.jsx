@@ -35,7 +35,9 @@ export default function CsvImporter({ accounts, onImportComplete }) {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("account_id", accountId);
+      if (accountId !== "none") {
+        formData.append("account_id", accountId);
+      }
 
       setStatus("processing");
 
@@ -70,7 +72,10 @@ export default function CsvImporter({ accounts, onImportComplete }) {
           <Label>Account</Label>
           <Select value={accountId} onValueChange={setAccountId}>
             <SelectTrigger><SelectValue placeholder="Select account to import into" /></SelectTrigger>
-            <SelectContent>{accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name} ({a.institution})</SelectItem>)}</SelectContent>
+            <SelectContent>
+              <SelectItem value="none">No Account / Legacy Data</SelectItem>
+              {accounts.map(a => <SelectItem key={a.id} value={a.id}>{a.name}{a.institution ? ` (${a.institution})` : ""}</SelectItem>)}
+            </SelectContent>
           </Select>
         </div>
 

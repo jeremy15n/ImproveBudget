@@ -94,6 +94,14 @@ export default function Dashboard() {
     queryFn: () => apiClient.entities.Transaction.list("-date", 200),
   });
 
+  // Transform cash flow data to include human-readable month names for X-axis
+  const chartData = useMemo(() => {
+    return cashFlowData.map(d => ({
+      ...d,
+      name: moment(d.period, d.period.length === 4 ? "YYYY" : "YYYY-MM").format(d.period.length === 4 ? "YYYY" : "MMM"),
+    }));
+  }, [cashFlowData]);
+
   // Aggregate totals from report data
   const totals = useMemo(() => {
     const income = cashFlowData.reduce((s, d) => s + d.income, 0);
@@ -200,7 +208,7 @@ export default function Dashboard() {
       {/* Main Row: Cash Flow (2/3) + Accounts (1/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <div className="lg:col-span-2">
-          <CashFlowChart data={cashFlowData} isLoading={loadingReport} />
+          <CashFlowChart data={chartData} isLoading={loadingReport} />
         </div>
         <AccountsSummary accounts={accounts} />
       </div>

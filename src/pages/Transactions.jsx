@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import moment from "moment";
 
 const TYPES = ["income", "expense", "savings", "transfer", "refund"];
-const PAGE_SIZES = [50, 100, 200];
+const PAGE_SIZES = [50, 100, 200, 500, 1000];
 
 export default function Transactions() {
   const { categoryList } = useCategories();

@@ -187,7 +187,17 @@ cd backend && rm -rf node_modules && npm install && cd ..
 
 Since your database (`budget.db`) is strictly separated from the code via `.gitignore`, you can upgrade the application without losing any personal data. Choose the method that matches your installation type.
 
-### Option 1: Git / Source Code Installation
+### Option 1: Easy Update (Windows)
+
+Double-click **`update_app.bat`** in the project root. It handles everything automatically:
+1. Pulls latest code from GitHub
+2. Installs frontend dependencies
+3. Installs backend dependencies
+4. Builds the frontend
+
+After it finishes, run `npm run dev` to start the app.
+
+### Option 2: Manual Update (Git / Source Code)
 *Use this if you are running the app directly on your machine or server using Node.js.*
 
 1.  **Stop the Application**

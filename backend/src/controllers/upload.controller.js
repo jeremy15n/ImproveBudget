@@ -122,12 +122,7 @@ export const importTransactions = async (req, res, next) => {
     }
 
     const { account_id } = req.body;
-    if (!account_id) {
-      return res.status(400).json({
-        error: true,
-        message: 'account_id is required'
-      });
-    }
+    const parsedAccountId = account_id ? parseInt(account_id) : null;
 
     // Parse file (CSV or XLSX)
     const { headers, data } = await csvService.parseFile(req.file.buffer, req.file.originalname);
@@ -140,7 +135,7 @@ export const importTransactions = async (req, res, next) => {
     }
 
     // Extract transactions
-    const transactions = csvService.extractTransactions(data, headers, parseInt(account_id));
+    const transactions = csvService.extractTransactions(data, headers, parsedAccountId);
 
     // Prepare batch for insert (no duplicate checking)
     const batch = transactions.map(tx => ({
