@@ -106,8 +106,9 @@ export default function Rules() {
   return (
     <div>
       <PageHeader
-        title="Categorization Rules"
+        title="Rules"
         subtitle={`${rules.length} rules · Auto-categorize your transactions`}
+        icon={Settings}
         actions={
           <div className="flex gap-2">
             <RecycleBin

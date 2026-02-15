@@ -127,6 +127,7 @@ export default function Investments() {
       <PageHeader
         title="Investments"
         subtitle={`${investments.length} holdings`}
+        icon={TrendingUp}
         actions={
           <div className="flex gap-2">
             <RecycleBin

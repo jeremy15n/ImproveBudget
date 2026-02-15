@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
-import { Plus, TrendingUp, Camera, RefreshCw, TrendingDown, Filter } from "lucide-react";
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
+import { Plus, TrendingUp, LineChart, RefreshCw, TrendingDown, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import moment from "moment";
@@ -89,6 +89,7 @@ export default function NetWorth() {
       <PageHeader
         title="Net Worth"
         subtitle="Track your wealth over time"
+        icon={LineChart}
         actions={<>
           <Button onClick={() => syncBalancesMut.mutate()} className="bg-indigo-600 hover:bg-indigo-700" disabled={syncBalancesMut.isPending}>
             <RefreshCw className={`w-4 h-4 mr-2 ${syncBalancesMut.isPending ? "animate-spin" : ""}`} />

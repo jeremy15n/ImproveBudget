@@ -154,6 +154,7 @@ export default function Transactions() {
       <PageHeader
         title="Transactions"
         subtitle={`${meta.total} transactions`}
+        icon={ArrowLeftRight}
         actions={
           <div className="flex items-center gap-2">
             <RecycleBin

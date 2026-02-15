@@ -60,6 +60,7 @@ export default function Accounts() {
   return (
     <div>
       <PageHeader title="Accounts & Assets" subtitle={`${accounts.length} accounts · Net: ${formatCurrency(totalAssets - totalLiabilities)}`}
+        icon={Wallet}
         actions={<div className="flex items-center gap-2"><RecycleBin entityName="Account" apiEntity={apiClient.entities.Account} queryKey={["accounts"]} renderRow={(acc) => (<div><p className="text-sm font-medium text-slate-700 dark:text-slate-200">{acc.name}</p><p className="text-xs text-slate-400">{acc.account_type?.replace(/_/g, " ")} · {formatCurrency(acc.balance)}</p></div>)} /><Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500"><Plus className="w-4 h-4 mr-2" />Add Account</Button></div>} />
 
       {isLoading ? <div className="grid gap-3">{Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}</div> : accounts.length === 0 ? <EmptyState icon={Wallet} title="No accounts yet" description="Add your financial accounts to start tracking your money." actionLabel="Add Account" onAction={openCreate} /> : (

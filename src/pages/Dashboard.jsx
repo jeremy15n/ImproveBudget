@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery } from "@tanstack/react-query";
-import { DollarSign, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, PiggyBank, LayoutDashboard } from "lucide-react";
 import moment from "moment";
 import PageHeader from "../components/shared/PageHeader";
 import StatCard from "../components/shared/StatCard";
@@ -120,7 +120,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <PageHeader title="Dashboard" subtitle={`${filterLabel}${filterMode === "year" ? ` ${selectedYear}` : ""} overview`} />
+      <PageHeader title="Dashboard" subtitle={`${filterLabel}${filterMode === "year" ? ` ${selectedYear}` : ""} overview`} icon={LayoutDashboard} />
 
       {/* Global Date Filter */}
       <div className="flex items-center gap-3 mb-5">

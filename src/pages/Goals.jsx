@@ -55,7 +55,8 @@ export default function Goals() {
 
   return (
     <div>
-      <PageHeader title="Financial Goals" subtitle="Track progress toward financial independence"
+      <PageHeader title="Goals" subtitle="Track progress toward financial independence"
+        icon={Target}
         actions={<div className="flex items-center gap-2"><RecycleBin entityName="Goal" apiEntity={apiClient.entities.FinancialGoal} queryKey={["goals"]} renderRow={(g) => (<div><p className="text-sm font-medium text-slate-700 dark:text-slate-200">{g.name}</p><p className="text-xs text-slate-400">Target: {formatCurrency(g.target_amount)}</p></div>)} /><Button onClick={openAdd} className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500"><Plus className="w-4 h-4 mr-2" />Add Goal</Button></div>} />
 
       {goals.length === 0 && !isLoading ? <EmptyState icon={Target} title="No goals yet" description="Set financial goals." actionLabel="Create Goal" onAction={openAdd} /> : (

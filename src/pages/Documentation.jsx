@@ -373,7 +373,7 @@ export default function Documentation() {
 
   return (
     <div>
-      <PageHeader title="Documentation" subtitle="Learn how to use BetterBudget" />
+      <PageHeader title="Documentation" subtitle="Learn how to use BetterBudget" icon={BookOpen} />
 
       <div className="space-y-2">
         {sections.map((section, idx) => (

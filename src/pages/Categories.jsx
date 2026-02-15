@@ -65,6 +65,7 @@ export default function Categories() {
       <PageHeader
         title="Categories"
         subtitle="Manage your spending categories"
+        icon={Palette}
         actions={
           <div className="flex items-center gap-2">
             <RecycleBin

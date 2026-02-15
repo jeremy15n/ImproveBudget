@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Copy, DollarSign, TrendingDown, PiggyBank, Target } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Copy, DollarSign, TrendingDown, PiggyBank, PieChart, PartyPopper, Target } from "lucide-react";
+import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -266,6 +267,29 @@ export default function Budget() {
     );
   };
 
+  const triggerConfetti = () => {
+    const duration = 5 * 1000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
+
+    function randomInRange(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    const interval = setInterval(function() {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+      // since particles fall down, start a bit higher than random
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+    }, 250);
+  };
+
   const displayMonth = moment(selectedMonth, "YYYY-MM").format("MMMM YYYY");
   const totalBudgetItems = budgets.length;
 
@@ -277,8 +301,17 @@ export default function Budget() {
       <PageHeader
         title="Budget"
         subtitle={`${displayMonth} · ${totalBudgetItems} items`}
+        icon={PieChart}
         actions={
           <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={triggerConfetti}
+              className="text-white bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
+            >
+              <PartyPopper className="w-4 h-4 mr-1.5" />
+              Woo Hoo!
+            </Button>
             <RecycleBin
               entityName="Budget"
               apiEntity={apiClient.entities.Budget}

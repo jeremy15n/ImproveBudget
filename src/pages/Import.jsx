@@ -14,7 +14,7 @@ export default function Import() {
 
   return (
     <div>
-      <PageHeader title="Import Data" subtitle="Bring in your financial data from banks and brokerages" />
+      <PageHeader title="Import Data" subtitle="Bring in your financial data from banks and brokerages" icon={Upload} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
