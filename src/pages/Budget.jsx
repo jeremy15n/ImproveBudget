@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Copy, DollarSign, TrendingDown, PiggyBank, PieChart, PartyPopper, Target } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Copy, DollarSign, TrendingDown, PiggyBank, PieChart, PartyPopper, Target, Frown } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -267,6 +267,7 @@ export default function Budget() {
     );
   };
 
+  // Happy Confetti (Keeps using canvas-confetti)
   const triggerConfetti = () => {
     const duration = 5 * 1000;
     const animationEnd = Date.now() + duration;
@@ -284,16 +285,58 @@ export default function Budget() {
       }
 
       const particleCount = 50 * (timeLeft / duration);
-      // since particles fall down, start a bit higher than random
       confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
       confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
     }, 250);
   };
 
+  // UPDATED: Custom "Sad Rain" Effect (No Canvas Confetti for this)
+  const triggerBooHoo = () => {
+    const emojis = ['👎', '💸', '📉', '😭', '🤡'];
+    const duration = 3000; // Rain for 3 seconds
+    const end = Date.now() + duration;
+
+    // Create a new interval to spawn elements
+    const interval = setInterval(() => {
+      if (Date.now() > end) {
+        clearInterval(interval);
+        return;
+      }
+
+      // Create a floating element
+      const el = document.createElement('div');
+      el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+      
+      // Styling to make it look like a large falling object, not confetti
+      el.style.position = 'fixed';
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.top = '-50px';
+      el.style.fontSize = Math.floor(Math.random() * 20 + 30) + 'px'; // Random size between 30px and 50px
+      el.style.zIndex = '9999';
+      el.style.pointerEvents = 'none'; // So you can click through them
+      el.style.userSelect = 'none';
+      document.body.appendChild(el);
+
+      // Animate using Web Animations API for smooth falling
+      const animation = el.animate([
+        { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+        { transform: `translateY(110vh) rotate(${Math.random() * 20 - 10}deg)`, opacity: 0 } // Slight wobble, mostly straight down
+      ], {
+        duration: Math.random() * 1500 + 1500, // Fall duration between 1.5s and 3s
+        easing: 'linear'
+      });
+
+      // Remove element when animation finishes
+      animation.onfinish = () => {
+        el.remove();
+      };
+
+    }, 100); // Spawn a new emoji every 100ms
+  };
+
   const displayMonth = moment(selectedMonth, "YYYY-MM").format("MMMM YYYY");
   const totalBudgetItems = budgets.length;
 
-  // Categories available in dialog (filtered by type when adding)
   const dialogCategories = editing ? categoryList : (categoriesByType[dialogType] || categoryList);
 
   return (
@@ -304,6 +347,14 @@ export default function Budget() {
         icon={PieChart}
         actions={
           <div className="flex items-center gap-2">
+             <Button
+              size="sm"
+              onClick={triggerBooHoo}
+              className="text-white bg-gradient-to-r from-red-700 to-rose-900"
+            >
+              <Frown className="w-4 h-4 mr-1.5" />
+              Boo Hoo!
+            </Button>
             <Button
               size="sm"
               onClick={triggerConfetti}
@@ -329,7 +380,7 @@ export default function Budget() {
           </div>
         }
       />
-
+      
       {/* Month Navigation Strip */}
       <div className="flex items-center justify-center gap-2 mb-4">
         <Button variant="outline" size="icon" className="h-8 w-8 shrink-0 dark:border-slate-700 dark:text-slate-400" onClick={() => navigateMonth(-1)}>
