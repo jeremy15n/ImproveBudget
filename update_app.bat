@@ -9,13 +9,19 @@ echo        BetterBudget - Update Script
 echo ============================================
 echo.
 
-echo [1/4] Pulling latest changes from GitHub...
-git pull origin main
-if %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo ERROR: Git pull failed. Check your internet connection or resolve merge conflicts.
-    pause
-    exit /b 1
+:: Check if this is a git repository
+if exist ".git" (
+    echo [1/4] Pulling latest changes from GitHub...
+    git pull origin main
+    if %ERRORLEVEL% NEQ 0 (
+        echo.
+        echo ERROR: Git pull failed. Check your internet connection or resolve merge conflicts.
+        pause
+        exit /b 1
+    )
+) else (
+    echo [1/4] Skipping git pull — not a git repository.
+    echo       To enable auto-updates, re-install with: git clone https://github.com/yourusername/BetterBudget.git
 )
 echo.
 
