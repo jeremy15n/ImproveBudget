@@ -1,5 +1,9 @@
 @echo off
 title BetterBudget Updater
+
+:: Change to the directory where this script lives (the repo root)
+cd /d "%~dp0"
+
 echo ============================================
 echo        BetterBudget - Update Script
 echo ============================================
