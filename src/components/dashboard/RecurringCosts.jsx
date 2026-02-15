@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { formatCurrency } from "../shared/formatters";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function RecurringCosts({ transactions }) {
   const [view, setView] = useState("monthly");
@@ -25,6 +25,11 @@ export default function RecurringCosts({ transactions }) {
       .filter((item) => item.months.size >= 2)
       .sort((a, b) => b.amount - a.amount);
   }, [transactions]);
+
+  const ITEMS_PER_PAGE = 8;
+  const [costPage, setCostPage] = useState(0);
+  const totalPages = Math.max(1, Math.ceil(recurring.length / ITEMS_PER_PAGE));
+  const pagedRecurring = recurring.slice(costPage * ITEMS_PER_PAGE, (costPage + 1) * ITEMS_PER_PAGE);
 
   const monthlyTotal = recurring.reduce((s, r) => s + r.amount, 0);
   const yearlyTotal = monthlyTotal * 12;
@@ -78,24 +83,45 @@ export default function RecurringCosts({ transactions }) {
       {recurring.length === 0 ? (
         <p className="text-sm text-slate-400 text-center py-8 flex-1">No recurring costs detected yet</p>
       ) : (
-        <div className="space-y-3 flex-1 overflow-y-auto">
-          {recurring.slice(0, 10).map((item, i) => (
-            <div key={i} className="flex items-center justify-between group">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 shrink-0">
-                  {item.name[0]?.toUpperCase()}
+        <>
+          <div className="space-y-3 flex-1">
+            {pagedRecurring.map((item, i) => (
+              <div key={costPage * ITEMS_PER_PAGE + i} className="flex items-center justify-between group">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 shrink-0">
+                    {item.name[0]?.toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-200 truncate">{item.name}</p>
+                    <p className="text-[11px] text-slate-400">{item.months.size} months detected</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-900 dark:text-slate-200 truncate">{item.name}</p>
-                  <p className="text-[11px] text-slate-400">{item.months.size} months detected</p>
-                </div>
+                <span className="text-sm font-bold text-slate-900 dark:text-slate-100 shrink-0 ml-2">
+                  {formatCurrency(view === "yearly" ? item.amount * 12 : item.amount)}
+                </span>
               </div>
-              <span className="text-sm font-bold text-slate-900 dark:text-slate-100 shrink-0 ml-2">
-                {formatCurrency(view === "yearly" ? item.amount * 12 : item.amount)}
-              </span>
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 pt-3 mt-auto border-t border-slate-100 dark:border-slate-800">
+              <button
+                onClick={() => setCostPage(p => Math.max(0, p - 1))}
+                disabled={costPage === 0}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-[11px] text-slate-400 font-medium">{costPage + 1} / {totalPages}</span>
+              <button
+                onClick={() => setCostPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={costPage >= totalPages - 1}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

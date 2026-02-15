@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery } from "@tanstack/react-query";
-import { DollarSign, TrendingUp, TrendingDown, PiggyBank, LayoutDashboard } from "lucide-react";
+import { LineChart, TrendingUp, TrendingDown, PiggyBank, LayoutDashboard } from "lucide-react";
 import moment from "moment";
 import PageHeader from "../components/shared/PageHeader";
 import StatCard from "../components/shared/StatCard";
@@ -175,7 +175,7 @@ export default function Dashboard() {
           <StatCard 
             label="Net Worth" 
             value={formatCurrency(netWorth)} 
-            icon={DollarSign} 
+            icon={LineChart}
             trend={nwTrend} 
             trendLabel="vs last snapshot" 
             iconBg="bg-indigo-100 dark:bg-indigo-500/10" 
@@ -199,8 +199,8 @@ export default function Dashboard() {
             label="Savings Rate" 
             value={`${totals.savingsRate.toFixed(1)}%`} 
             icon={PiggyBank} 
-            iconBg="bg-amber-100 dark:bg-amber-500/10" 
-            iconColor="text-amber-600 dark:text-amber-400" 
+            iconBg="bg-indigo-100 dark:bg-indigo-500/10"
+            iconColor="text-indigo-600 dark:text-indigo-400" 
           />
         </div>
       )}

@@ -17,7 +17,7 @@ export default function AccountsSummary({ accounts }) {
         <p className="text-sm text-slate-400 text-center py-6">No accounts added yet.</p>
       ) : (
         <div className="space-y-2">
-          {accounts.filter(a => a.is_active !== false).map((acc) => (
+          {accounts.filter(a => a.is_active !== false).sort((a, b) => Math.abs(b.balance || 0) - Math.abs(a.balance || 0)).slice(0, 5).map((acc) => (
             <div key={acc.id} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
               <AccountIcon acc={acc} size="w-8 h-8" iconSize="w-4 h-4" textSize="text-xs" />
               <div className="flex-1 min-w-0">
