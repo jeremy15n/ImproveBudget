@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
-import { Plus, TrendingUp, LineChart, RefreshCw, TrendingDown, Filter } from "lucide-react";
+import { Plus, TrendingUp, LineChart, RefreshCw, TrendingDown, Filter, Wallet, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import moment from "moment";
@@ -91,7 +91,7 @@ export default function NetWorth() {
         subtitle="Track your wealth over time"
         icon={LineChart}
         actions={<>
-          <Button onClick={() => syncBalancesMut.mutate()} className="bg-indigo-600 hover:bg-indigo-700" disabled={syncBalancesMut.isPending}>
+          <Button onClick={() => syncBalancesMut.mutate()} className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500" disabled={syncBalancesMut.isPending}>
             <RefreshCw className={`w-4 h-4 mr-2 ${syncBalancesMut.isPending ? "animate-spin" : ""}`} />
             {syncBalancesMut.isPending ? "Syncing..." : "Sync Balances"}
           </Button>
@@ -102,14 +102,26 @@ export default function NetWorth() {
         <StatCard 
           label="Net Worth" 
           value={formatCurrency(currentNW)} 
-          icon={TrendingUp} 
+          icon={LineChart} 
           trend={nwChangePct} 
           trendLabel={latest ? `vs last snapshot` : 'Start tracking today'} 
-          iconBg="bg-indigo-50" 
-          iconColor="text-indigo-600" 
+          iconBg="bg-indigo-100 dark:bg-indigo-500/10" 
+          iconColor="text-indigo-600 dark:text-indigo-400" 
         />
-        <StatCard label="Total Assets" value={formatCurrency(totalAssets)} icon={TrendingUp} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-        <StatCard label="Total Liabilities" value={formatCurrency(totalLiabilities)} icon={TrendingDown} iconBg="bg-red-50" iconColor="text-red-500" />
+        <StatCard 
+          label="Total Assets" 
+          value={formatCurrency(totalAssets)} 
+          icon={Wallet} 
+          iconBg="bg-emerald-100 dark:bg-emerald-500/10" 
+          iconColor="text-emerald-600 dark:text-emerald-400" 
+        />
+        <StatCard 
+          label="Total Liabilities" 
+          value={formatCurrency(totalLiabilities)} 
+          icon={CreditCard} 
+          iconBg="bg-rose-100 dark:bg-rose-500/10" 
+          iconColor="text-rose-600 dark:text-rose-400" 
+        />
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5 mb-6">
@@ -118,7 +130,7 @@ export default function NetWorth() {
           
           <div className="flex items-center gap-2">
             <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[120px] h-8 text-xs">
+              <SelectTrigger className="w-[120px] h-8 text-xs bg-slate-50 dark:bg-slate-800 dark:border-slate-700">
                 <Filter className="w-3 h-3 mr-2 text-slate-400" />
                 <SelectValue placeholder="Year" />
               </SelectTrigger>
@@ -137,11 +149,11 @@ export default function NetWorth() {
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="nwGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1} />
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
                   <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} className="dark:opacity-10" />
               <XAxis 
                 dataKey="date" 
                 tick={{ fontSize: 12, fill: "#94a3b8" }} 
@@ -158,7 +170,7 @@ export default function NetWorth() {
               <Tooltip 
                 labelFormatter={(label, payload) => payload[0]?.payload.fullDate || label}
                 formatter={(v) => [formatCurrency(v), "Net Worth"]}
-                contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} 
+                contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} 
               />
               <Area 
                 type="monotone" 
@@ -179,13 +191,18 @@ export default function NetWorth() {
         )}
       </div>
 
-      {/* Asset / Liability Breakdown - MOVED UP */}
+      {/* Asset / Liability Breakdown - DARK MODE & COLOR FIX */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Assets */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Asset Breakdown</h3>
-            <span className="text-xs font-medium bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full">{assets.length} Accounts</span>
+            <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center">
+                    <Wallet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                Asset Breakdown
+            </h3>
+            <span className="text-xs font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded-full">{assets.length} Accounts</span>
           </div>
           
           {assets.length === 0 ? <p className="text-sm text-slate-400">No asset accounts found.</p> : (
@@ -198,7 +215,7 @@ export default function NetWorth() {
               ))}
               <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex items-center justify-between mt-2">
                 <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Total Assets</span>
-                <span className="text-sm font-bold text-emerald-600">{formatCurrency(totalAssets)}</span>
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(totalAssets)}</span>
               </div>
             </div>
           )}
@@ -207,8 +224,13 @@ export default function NetWorth() {
         {/* Liabilities */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-red-600 dark:text-red-400">Liability Breakdown</h3>
-            <span className="text-xs font-medium bg-red-50 text-red-600 px-2 py-1 rounded-full">{liabilities.length} Accounts</span>
+            <h3 className="text-sm font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-rose-100 dark:bg-rose-500/10 flex items-center justify-center">
+                    <CreditCard className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                </div>
+                Liability Breakdown
+            </h3>
+            <span className="text-xs font-medium bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 px-2 py-1 rounded-full">{liabilities.length} Accounts</span>
           </div>
 
           {liabilities.length === 0 ? <p className="text-sm text-slate-400">No liability accounts found.</p> : (
@@ -216,12 +238,12 @@ export default function NetWorth() {
               {liabilities.map(a => (
                 <div key={a.id} className="flex items-center justify-between group">
                   <span className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">{a.name}</span>
-                  <span className="text-sm font-semibold text-red-600 dark:text-red-400">{formatCurrency(a.balance || 0)}</span>
+                  <span className="text-sm font-semibold text-rose-600 dark:text-rose-400">{formatCurrency(a.balance || 0)}</span>
                 </div>
               ))}
               <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex items-center justify-between mt-2">
                 <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Total Liabilities</span>
-                <span className="text-sm font-bold text-red-600">{formatCurrency(totalLiabilities)}</span>
+                <span className="text-sm font-bold text-rose-600 dark:text-rose-400">{formatCurrency(totalLiabilities)}</span>
               </div>
             </div>
           )}

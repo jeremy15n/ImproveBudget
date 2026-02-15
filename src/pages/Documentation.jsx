@@ -3,6 +3,7 @@ import { BookOpen, ChevronDown, ChevronRight } from "lucide-react";
 import PageHeader from "../components/shared/PageHeader";
 import ReactMarkdown from "react-markdown";
 
+// ... (Your existing sections array remains unchanged) ...
 const sections = [
   {
     title: "Getting Started",
@@ -383,8 +384,9 @@ export default function Documentation() {
               className="w-full flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
-                  <BookOpen className="w-4 h-4 text-indigo-600" />
+                {/* DARK MODE FIX: Indigo Theme */}
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{section.title}</span>
               </div>
@@ -392,7 +394,7 @@ export default function Documentation() {
             </button>
             {openSections.has(idx) && (
               <div className="px-5 pb-6 pt-0">
-                <div className="prose prose-sm prose-slate dark:prose-invert max-w-none [&_table]:text-xs [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_table]:border [&_th]:border [&_td]:border [&_th]:bg-slate-50 dark:[&_th]:bg-slate-800">
+                <div className="prose prose-sm prose-slate dark:prose-invert max-w-none [&_table]:text-xs [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_table]:border [&_th]:border [&_td]:border [&_th]:bg-slate-50 dark:[&_th]:bg-slate-800 text-slate-600 dark:text-slate-400">
                   <ReactMarkdown>{section.content}</ReactMarkdown>
                 </div>
               </div>

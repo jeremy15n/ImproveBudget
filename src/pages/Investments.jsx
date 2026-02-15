@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, TrendingUp, Pencil, Trash2, RefreshCw } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Pencil, Trash2, RefreshCw, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -151,9 +151,29 @@ export default function Investments() {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard label="Total Value" value={formatCurrency(totalValue)} icon={TrendingUp} iconBg="bg-indigo-50" iconColor="text-indigo-600" />
-        <StatCard label="Total Gain/Loss" value={formatCurrency(totalGain)} trend={totalGainPct} trendLabel="all time" iconBg={totalGain >= 0 ? "bg-emerald-50" : "bg-red-50"} iconColor={totalGain >= 0 ? "text-emerald-600" : "text-red-500"} icon={TrendingUp} />
-        <StatCard label="Cost Basis" value={formatCurrency(totalCost)} icon={TrendingUp} iconBg="bg-slate-50" iconColor="text-slate-500" />
+        <StatCard 
+          label="Total Value" 
+          value={formatCurrency(totalValue)} 
+          icon={TrendingUp} 
+          iconBg="bg-indigo-50 dark:bg-indigo-500/10" 
+          iconColor="text-indigo-600 dark:text-indigo-400" 
+        />
+        <StatCard 
+          label="Total Gain/Loss" 
+          value={formatCurrency(totalGain)} 
+          trend={totalGainPct} 
+          trendLabel="all time" 
+          iconBg={totalGain >= 0 ? "bg-emerald-50 dark:bg-emerald-500/10" : "bg-red-50 dark:bg-red-500/10"} 
+          iconColor={totalGain >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"} 
+          icon={totalGain >= 0 ? TrendingUp : TrendingDown} 
+        />
+        <StatCard 
+          label="Cost Basis" 
+          value={formatCurrency(totalCost)} 
+          icon={DollarSign} 
+          iconBg="bg-amber-50 dark:bg-amber-500/10" 
+          iconColor="text-amber-600 dark:text-amber-400" 
+        />
       </div>
 
       {allocationData.length > 0 && (
@@ -162,9 +182,12 @@ export default function Investments() {
           <div className="flex items-center gap-6 max-w-xl mx-auto">
             <div className="w-[160px] h-[160px] md:w-[200px] md:h-[200px] shrink-0">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart><Pie data={allocationData} dataKey="value" innerRadius="55%" outerRadius="85%" paddingAngle={2} stroke="none">
-                  {allocationData.map(d => <Cell key={d.key} fill={ASSET_COLORS[d.key] || "#94a3b8"} />)}
-                </Pie><Tooltip formatter={(v) => formatCurrency(v)} contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#000" }} /></PieChart>
+                <PieChart>
+                  <Pie data={allocationData} dataKey="value" innerRadius="55%" outerRadius="85%" paddingAngle={2} stroke="none">
+                    {allocationData.map(d => <Cell key={d.key} fill={ASSET_COLORS[d.key] || "#94a3b8"} />)}
+                  </Pie>
+                  <Tooltip formatter={(v) => formatCurrency(v)} contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />
+                </PieChart>
               </ResponsiveContainer>
             </div>
             <div className="flex-1 space-y-2.5">
@@ -191,19 +214,56 @@ export default function Investments() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead><tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                <th className="text-left px-4 py-3">Holding</th><th className="text-left px-4 py-3">Class</th><th className="text-right px-4 py-3">Shares</th><th className="text-right px-4 py-3">Value</th><th className="text-right px-4 py-3">Gain/Loss</th><th className="px-4 py-3"></th>
-              </tr></thead>
-              <tbody>{investments.map(inv => (
-                <tr key={inv.id} className="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                  <td className="px-4 py-3"><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{inv.symbol}</p><p className="text-[11px] text-slate-400">{inv.name}</p></td>
-                  <td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded-md capitalize" style={{ backgroundColor: `${ASSET_COLORS[inv.asset_class] || "#94a3b8"}15`, color: ASSET_COLORS[inv.asset_class] || "#64748b" }}>{inv.asset_class?.replace(/_/g, " ")}</span></td>
-                  <td className="px-4 py-3 text-right text-sm text-slate-600 dark:text-slate-400">{inv.shares}</td>
-                  <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(inv.current_value)}</td>
-                  <td className="px-4 py-3 text-right"><span className={`text-sm font-semibold ${(inv.gain_loss || 0) >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"}`}>{formatCurrency(inv.gain_loss || 0)}</span><span className="text-[11px] text-slate-400 ml-1">({(inv.gain_loss_pct || 0).toFixed(1)}%)</span></td>
-                  <td className="px-4 py-3"><div className="flex gap-0.5"><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setForm(inv); setEditing(inv); setDialogOpen(true); }}><Pencil className="w-3.5 h-3.5 text-slate-400" /></Button><Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMut.mutate(inv.id)}><Trash2 className="w-3.5 h-3.5 text-red-400" /></Button></div></td>
+              <thead>
+                <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  <th className="text-left px-4 py-3">Holding</th>
+                  <th className="text-left px-4 py-3">Class</th>
+                  <th className="text-right px-4 py-3">Shares</th>
+                  <th className="text-right px-4 py-3">Value</th>
+                  <th className="text-right px-4 py-3">Gain/Loss</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
-              ))}</tbody>
+              </thead>
+              <tbody>
+                {investments.map(inv => (
+                  <tr key={inv.id} className="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-400 shrink-0">
+                          {inv.symbol ? inv.symbol.slice(0, 2) : "??"}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{inv.symbol}</p>
+                          <p className="text-[11px] text-slate-400 truncate max-w-[120px]">{inv.name}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs px-2 py-0.5 rounded-md capitalize" style={{ backgroundColor: `${ASSET_COLORS[inv.asset_class] || "#94a3b8"}15`, color: ASSET_COLORS[inv.asset_class] || "#64748b" }}>
+                        {inv.asset_class?.replace(/_/g, " ")}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-slate-600 dark:text-slate-400">{inv.shares}</td>
+                    <td className="px-4 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(inv.current_value)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`text-sm font-semibold ${(inv.gain_loss || 0) >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"}`}>
+                        {formatCurrency(inv.gain_loss || 0)}
+                      </span>
+                      <span className="text-[11px] text-slate-400 ml-1">({(inv.gain_loss_pct || 0).toFixed(1)}%)</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-0.5">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setForm(inv); setEditing(inv); setDialogOpen(true); }}>
+                          <Pencil className="w-3.5 h-3.5 text-slate-400 hover:text-slate-900 dark:hover:text-slate-200" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMut.mutate(inv.id)}>
+                          <Trash2 className="w-3.5 h-3.5 text-red-400 hover:text-red-500" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         </div>
@@ -220,7 +280,6 @@ export default function Investments() {
                         <div className="grid gap-2"><Label>Symbol</Label><Input value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value.toUpperCase() })} /></div>
                         <div className="grid gap-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
                     </div>
-                    {/* ... rest of edit form fields matching Add row ... */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2"><Label>Asset Class</Label><Select value={form.asset_class} onValueChange={(v) => setForm({ ...form, asset_class: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{ASSET_CLASSES.map(c => <SelectItem key={c} value={c}>{c.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select></div>
                         <div className="grid gap-2"><Label>Account</Label><Select value={form.account_id || ""} onValueChange={(v) => { const a = accounts.find(x => x.id === v); setForm({ ...form, account_id: v, account_name: a?.name || "" }); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{accounts.filter(a => ["brokerage","retirement_401k","retirement_ira"].includes(a.account_type)).map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select></div>

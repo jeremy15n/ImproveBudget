@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftRight, Trash2, X, Tag, RefreshCw, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ArrowLeftRight, Trash2, X, Tag, RefreshCw, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, PiggyBank, Plus, Check } from "lucide-react"; // Added Check
 import PageHeader from "../components/shared/PageHeader";
 import EmptyState from "../components/shared/EmptyState";
 import RecycleBin from "../components/shared/RecycleBin";
@@ -30,14 +30,11 @@ export default function Transactions() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const qc = useQueryClient();
 
-  // Build server-side filters
   const serverFilters = {};
   if (filters.category !== "all") serverFilters.category = filters.category;
   if (filters.type !== "all") serverFilters.type = filters.type;
   if (filters.account !== "all") serverFilters.account_id = filters.account;
   if (filters.search) serverFilters.search = filters.search;
-  
-  // FIX: Send 1 instead of true for SQLite compatibility
   if (filters.status === "flagged") serverFilters.is_flagged = 1;
 
   const { data: result, isLoading } = useQuery({
@@ -54,7 +51,6 @@ export default function Transactions() {
     queryFn: () => apiClient.entities.Account.list(),
   });
 
-  // Reset to page 1 when filters change
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
     setPage(1);
@@ -127,17 +123,6 @@ export default function Transactions() {
   const handleBulkType = (type) => {
     const ids = Array.from(selectedIds);
     bulkUpdateMut.mutate({ ids, data: { type } });
-    const toFlip = transactions.filter(t => selectedIds.has(t.id)).filter(t => {
-      if (type === 'expense' && t.amount > 0) return true;
-      if (type === 'income' && t.amount < 0) return true;
-      return false;
-    });
-    if (toFlip.length > 0) {
-      for (const t of toFlip) {
-        apiClient.entities.Transaction.update(t.id, { amount: -t.amount });
-      }
-      setTimeout(() => qc.invalidateQueries({ queryKey: ["transactions"] }), 500);
-    }
   };
 
   const handleBulkDelete = () => {
@@ -145,9 +130,22 @@ export default function Transactions() {
     bulkDeleteMut.mutate(ids);
   };
 
-  // Pagination display calculation
   const startItem = meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1;
   const endItem = Math.min(meta.page * meta.limit, meta.total);
+
+  // Helper component for the custom checkbox
+  const CustomCheckbox = ({ checked, onChange }) => (
+    <div 
+      onClick={onChange}
+      className={`w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors shrink-0
+        ${checked 
+          ? "bg-indigo-600 border-indigo-600 text-white" 
+          : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:border-slate-400 dark:hover:border-slate-500"
+        }`}
+    >
+      {checked && <Check className="w-3 h-3" strokeWidth={3} />}
+    </div>
+  );
 
   return (
     <div>
@@ -164,7 +162,7 @@ export default function Transactions() {
               renderRow={(tx) => (
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-700">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                       {tx.merchant_clean || tx.merchant_raw || 'Unknown'}
                     </p>
                     <p className="text-xs text-slate-400">
@@ -177,7 +175,7 @@ export default function Transactions() {
                 </div>
               )}
             />
-            <Button className="bg-indigo-600 hover:bg-indigo-700" size="sm" onClick={() => setShowAddDialog(true)}>
+            <Button className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500" size="sm" onClick={() => setShowAddDialog(true)}>
               <Plus className="w-4 h-4 mr-1.5" /> Add Transaction
             </Button>
           </div>
@@ -185,14 +183,13 @@ export default function Transactions() {
       />
       <TransactionFilters filters={filters} setFilters={handleFilterChange} accounts={accounts} />
 
-      {/* Pagination Controls - TOP */}
       {meta.total > 0 && (
         <div className="flex items-center justify-between mb-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-2.5 px-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-500 font-medium">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
               Showing <span className="text-slate-900 dark:text-slate-100">{startItem}–{endItem}</span> of {meta.total}
             </span>
-            <div className="h-4 w-px bg-slate-200 mx-1" />
+            <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-1" />
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400">Show</span>
               <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
@@ -215,7 +212,7 @@ export default function Transactions() {
               <Button
                 variant="outline"
                 size="icon"
-                className="h-7 w-7 border-slate-200"
+                className="h-7 w-7 border-slate-200 dark:border-slate-700"
                 disabled={meta.page <= 1}
                 onClick={() => setPage(p => p - 1)}
               >
@@ -224,7 +221,7 @@ export default function Transactions() {
               <Button
                 variant="outline"
                 size="icon"
-                className="h-7 w-7 border-slate-200"
+                className="h-7 w-7 border-slate-200 dark:border-slate-700"
                 disabled={meta.page >= meta.totalPages}
                 onClick={() => setPage(p => p + 1)}
               >
@@ -235,13 +232,12 @@ export default function Transactions() {
         </div>
       )}
 
-      {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="mb-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-xl p-3 flex items-center gap-3 flex-wrap animate-in fade-in slide-in-from-top-2 duration-200">
-          <span className="text-sm font-medium text-indigo-700">{selectedIds.size} selected</span>
+        <div className="mb-3 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-xl p-3 flex items-center gap-3 flex-wrap animate-in fade-in slide-in-from-top-2 duration-200">
+          <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">{selectedIds.size} selected</span>
 
           <Select onValueChange={handleBulkCategory}>
-            <SelectTrigger className="w-44 h-8 text-xs bg-white dark:bg-slate-800">
+            <SelectTrigger className="w-44 h-8 text-xs bg-white dark:bg-slate-800 dark:border-slate-700">
               <Tag className="w-3 h-3 mr-1" />
               <SelectValue placeholder="Change Category" />
             </SelectTrigger>
@@ -253,7 +249,7 @@ export default function Transactions() {
           </Select>
 
           <Select onValueChange={handleBulkType}>
-            <SelectTrigger className="w-40 h-8 text-xs bg-white dark:bg-slate-800">
+            <SelectTrigger className="w-40 h-8 text-xs bg-white dark:bg-slate-800 dark:border-slate-700">
               <RefreshCw className="w-3 h-3 mr-1" />
               <SelectValue placeholder="Change Type" />
             </SelectTrigger>
@@ -265,18 +261,18 @@ export default function Transactions() {
           </Select>
 
           {!showDeleteConfirm ? (
-            <Button variant="outline" size="sm" className="h-8 text-xs text-red-600 border-red-200 hover:bg-red-50" onClick={() => setShowDeleteConfirm(true)}>
+            <Button variant="outline" size="sm" className="h-8 text-xs text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-900/20" onClick={() => setShowDeleteConfirm(true)}>
               <Trash2 className="w-3 h-3 mr-1" /> Delete Selected
             </Button>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-red-600 font-medium">Delete {selectedIds.size} transactions?</span>
-              <Button size="sm" className="h-7 text-xs bg-red-600 hover:bg-red-700" onClick={handleBulkDelete}>Confirm</Button>
-              <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+              <span className="text-xs text-red-600 dark:text-red-400 font-medium">Delete {selectedIds.size} transactions?</span>
+              <Button size="sm" className="h-7 text-xs bg-red-600 hover:bg-red-700 dark:bg-red-700" onClick={handleBulkDelete}>Confirm</Button>
+              <Button variant="outline" size="sm" className="h-7 text-xs dark:border-slate-700" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
             </div>
           )}
 
-          <Button variant="ghost" size="sm" className="h-8 text-xs ml-auto" onClick={() => { setSelectedIds(new Set()); setShowDeleteConfirm(false); }}>
+          <Button variant="ghost" size="sm" className="h-8 text-xs ml-auto dark:text-slate-400 dark:hover:text-slate-200" onClick={() => { setSelectedIds(new Set()); setShowDeleteConfirm(false); }}>
             <X className="w-3 h-3 mr-1" /> Deselect All
           </Button>
         </div>
@@ -288,27 +284,71 @@ export default function Transactions() {
         <EmptyState icon={ArrowLeftRight} title="No transactions found" description="Adjust your filters or import data." />
       ) : (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
-          {/* Select All header */}
           <div className="flex items-center gap-3 py-2 px-3 bg-slate-50/50 dark:bg-slate-800/50 rounded-t-2xl">
-            <input
-              type="checkbox"
-              checked={selectedIds.size === transactions.length && transactions.length > 0}
-              onChange={toggleSelectAll}
-              className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+            {/* Custom Checkbox for Select All */}
+            <CustomCheckbox 
+              checked={selectedIds.size === transactions.length && transactions.length > 0} 
+              onChange={toggleSelectAll} 
             />
-            <span className="text-xs text-slate-500 font-medium">Select All on Page</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Select All on Page</span>
           </div>
-          {transactions.map((t) => (
-            <TransactionRow
-              key={t.id}
-              transaction={t}
-              selected={selectedIds.has(t.id)}
-              onToggleSelect={toggleSelect}
-              onEdit={setEditTx}
-              onToggleFlag={(tx) => updateMut.mutate({ id: tx.id, d: { is_flagged: !tx.is_flagged } })}
-              onDelete={(tx) => deleteMut.mutate(tx.id)}
-            />
-          ))}
+          {transactions.map((t) => {
+            const isSavings = t.type === 'savings';
+            const isIncome = t.amount > 0 && !isSavings;
+            
+            // Logic for Icon and Color
+            let Icon = TrendingDown;
+            let colorClass = "bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400";
+            let textColorClass = "text-slate-900 dark:text-slate-100";
+            let sign = "";
+
+            if (isSavings) {
+                Icon = PiggyBank;
+                colorClass = "bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400";
+                textColorClass = "text-indigo-600 dark:text-indigo-400";
+            } else if (isIncome) {
+                Icon = TrendingUp;
+                colorClass = "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+                textColorClass = "text-emerald-600 dark:text-emerald-400";
+                sign = "+";
+            }
+
+            return (
+              <div key={t.id} className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                {/* Custom Checkbox for Row */}
+                <CustomCheckbox 
+                  checked={selectedIds.has(t.id)} 
+                  onChange={() => toggleSelect(t.id)} 
+                />
+                
+                {/* ICON CIRCLE */}
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
+                  <Icon className="w-4 h-4" />
+                </div>
+
+                <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-2" onClick={() => setEditTx(t)}>
+                  <div className="cursor-pointer">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-200 truncate">{t.merchant_clean || t.merchant_raw}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{moment(t.date).format("MMM D, YYYY")}</p>
+                  </div>
+                  <div className="flex items-center md:justify-end gap-3 cursor-pointer">
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 truncate max-w-[120px]">
+                      {t.category ? getCategoryLabel(t.category) : "Uncategorized"}
+                    </span>
+                    <span className={`text-sm font-bold ${textColorClass}`}>
+                      {sign}{formatCurrency(Math.abs(t.amount))}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500" onClick={() => deleteMut.mutate(t.id)}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

@@ -161,10 +161,37 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard label="Net Worth" value={formatCurrency(netWorth)} icon={DollarSign} trend={nwTrend} trendLabel="vs last snapshot" iconBg="bg-indigo-50" iconColor="text-indigo-600" />
-          <StatCard label="Income" value={formatCurrency(totals.income)} icon={TrendingUp} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-          <StatCard label="Expenses" value={formatCurrency(totals.expenses)} icon={TrendingDown} iconBg="bg-red-50" iconColor="text-red-500" />
-          <StatCard label="Savings Rate" value={`${totals.savingsRate.toFixed(1)}%`} icon={PiggyBank} iconBg="bg-amber-50" iconColor="text-amber-600" />
+          {/* UPDATED: StatCards now use the explicit Budget page color schemes */}
+          <StatCard 
+            label="Net Worth" 
+            value={formatCurrency(netWorth)} 
+            icon={DollarSign} 
+            trend={nwTrend} 
+            trendLabel="vs last snapshot" 
+            iconBg="bg-indigo-100 dark:bg-indigo-500/10" 
+            iconColor="text-indigo-600 dark:text-indigo-400" 
+          />
+          <StatCard 
+            label="Income" 
+            value={formatCurrency(totals.income)} 
+            icon={TrendingUp} 
+            iconBg="bg-emerald-100 dark:bg-emerald-500/10" 
+            iconColor="text-emerald-600 dark:text-emerald-400" 
+          />
+          <StatCard 
+            label="Expenses" 
+            value={formatCurrency(totals.expenses)} 
+            icon={TrendingDown} 
+            iconBg="bg-rose-100 dark:bg-rose-500/10" 
+            iconColor="text-rose-600 dark:text-rose-400" 
+          />
+          <StatCard 
+            label="Savings Rate" 
+            value={`${totals.savingsRate.toFixed(1)}%`} 
+            icon={PiggyBank} 
+            iconBg="bg-amber-100 dark:bg-amber-500/10" 
+            iconColor="text-amber-600 dark:text-amber-400" 
+          />
         </div>
       )}
 
