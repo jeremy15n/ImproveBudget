@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import PageHeader from "../components/shared/PageHeader";
 import RecycleBin from "../components/shared/RecycleBin";
 
-export default function Settings() {
+export default function Categories() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: "", label: "", color: "#6366f1" });
@@ -49,7 +49,6 @@ export default function Settings() {
   const handleSave = () => {
     const data = {
       ...form,
-      // Auto-generate name from label if creating new
       name: form.name || form.label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""),
       is_default: 0,
       sort_order: editing ? editing.sort_order : categories.length,
@@ -89,7 +88,6 @@ export default function Settings() {
         }
       />
 
-      {/* Categories List */}
       <div className="bg-white rounded-2xl border border-slate-200/60 divide-y divide-slate-100">
         <div className="px-5 py-3">
           <h3 className="text-sm font-semibold text-slate-700">Categories</h3>
@@ -100,10 +98,7 @@ export default function Settings() {
         ) : (
           categories.map((cat) => (
             <div key={cat.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors">
-              <div
-                className="w-5 h-5 rounded-md border border-slate-200 shrink-0"
-                style={{ backgroundColor: cat.color }}
-              />
+              <div className="w-5 h-5 rounded-md border border-slate-200 shrink-0" style={{ backgroundColor: cat.color }} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-800">{cat.label}</p>
                 <p className="text-[11px] text-slate-400">{cat.name}</p>
@@ -133,7 +128,6 @@ export default function Settings() {
         )}
       </div>
 
-      {/* Add/Edit Category Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -156,7 +150,7 @@ export default function Settings() {
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className="text-slate-500"
                 />
-                <p className="text-[11px] text-slate-400">Used internally for matching. Changing this won't update existing transactions.</p>
+                <p className="text-[11px] text-slate-400">Used internally for matching.</p>
               </div>
             )}
             <div className="grid gap-2">
@@ -180,11 +174,7 @@ export default function Settings() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
-            <Button
-              onClick={handleSave}
-              disabled={!form.label.trim()}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
+            <Button onClick={handleSave} disabled={!form.label.trim()} className="bg-indigo-600 hover:bg-indigo-700">
               {editing ? "Update" : "Create"}
             </Button>
           </DialogFooter>

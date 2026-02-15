@@ -1,22 +1,18 @@
 import React, { useState } from 'react';
-import { Trash2, RotateCcw, Trash, X } from 'lucide-react';
+import { Trash2, RotateCcw, Trash, X, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import moment from 'moment';
 
 /**
- * Reusable Recycle Bin Component
- *
- * Props:
- * - entityName: String (e.g., "Transaction", "Account")
- * - apiEntity: API client entity instance (e.g., apiClient.entities.Transaction)
- * - renderRow: Function to render each deleted item
- * - queryKey: Array for React Query invalidation
+ * Reusable Recycle Bin Component with Search
  */
 export default function RecycleBin({ entityName, apiEntity, renderRow, queryKey }) {
   const [open, setOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
   const qc = useQueryClient();
 
   const { data: deletedItems = [], isLoading } = useQuery({
@@ -75,6 +71,23 @@ export default function RecycleBin({ entityName, apiEntity, renderRow, queryKey 
     bulkHardDeleteMut.mutate(ids);
   };
 
+  // Filter items based on search query
+  const filteredItems = deletedItems.filter(item => {
+    if (!searchQuery) return true;
+    const lowerQ = searchQuery.toLowerCase();
+    
+    // Generic search: check common fields
+    return (
+      item.name?.toLowerCase().includes(lowerQ) ||
+      item.label?.toLowerCase().includes(lowerQ) ||
+      item.merchant_clean?.toLowerCase().includes(lowerQ) ||
+      item.merchant_raw?.toLowerCase().includes(lowerQ) ||
+      item.category?.toLowerCase().includes(lowerQ) ||
+      item.amount?.toString().includes(lowerQ) ||
+      item.notes?.toLowerCase().includes(lowerQ)
+    );
+  });
+
   return (
     <>
       <Button
@@ -93,98 +106,119 @@ export default function RecycleBin({ entityName, apiEntity, renderRow, queryKey 
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-slate-600" />
-              Recycle Bin - {entityName}s
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader className="pb-4 border-b border-slate-100">
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-slate-600" />
+                Recycle Bin - {entityName}s
+              </div>
             </DialogTitle>
           </DialogHeader>
 
-          {isLoading ? (
-            <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
-          ) : deletedItems.length === 0 ? (
-            <div className="py-8 text-center">
-              <Trash2 className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-sm text-slate-500">Recycle bin is empty</p>
+          <div className="py-4 space-y-4 flex-1 overflow-hidden flex flex-col">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input 
+                placeholder={`Search deleted ${entityName.toLowerCase()}s...`}
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-          ) : (
-            <>
-              {/* Bulk Actions */}
-              {selectedIds.size > 0 && (
-                <div className="mb-3 bg-slate-50 border border-slate-200 rounded-lg p-3 flex items-center gap-3">
-                  <span className="text-sm font-medium text-slate-700">
-                    {selectedIds.size} selected
-                  </span>
-                  <Button
-                    size="sm"
-                    onClick={handleBulkRestore}
-                    className="h-8 bg-indigo-600 hover:bg-indigo-700"
-                  >
-                    <RotateCcw className="w-3 h-3 mr-1" />
-                    Restore
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleBulkHardDelete}
-                    className="h-8 text-red-600 border-red-200 hover:bg-red-50"
-                  >
-                    <Trash className="w-3 h-3 mr-1" />
-                    Delete Permanently
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedIds(new Set())}
-                    className="h-8 ml-auto"
-                  >
-                    <X className="w-3 h-3 mr-1" />
-                    Clear
-                  </Button>
-                </div>
-              )}
 
-              {/* Deleted Items List */}
-              <div className="divide-y divide-slate-100 border border-slate-200 rounded-lg">
-                {deletedItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 p-3 hover:bg-slate-50">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(item.id)}
-                      onChange={() => toggleSelect(item.id)}
-                      className="w-4 h-4 rounded border-slate-300 text-indigo-600"
-                    />
-                    <div className="flex-1">
-                      {renderRow(item)}
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => restoreMut.mutate(item.id)}
-                        title="Restore"
-                      >
-                        <RotateCcw className="w-4 h-4 text-green-600" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          if (confirm('Permanently delete? This cannot be undone!')) {
-                            hardDeleteMut.mutate(item.id);
-                          }
-                        }}
-                        title="Delete Permanently"
-                      >
-                        <Trash className="w-4 h-4 text-red-600" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+            {isLoading ? (
+              <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
+            ) : deletedItems.length === 0 ? (
+              <div className="py-8 text-center">
+                <Trash2 className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm text-slate-500">Recycle bin is empty</p>
               </div>
-            </>
-          )}
+            ) : (
+              <div className="flex-1 overflow-auto flex flex-col min-h-0">
+                {/* Bulk Actions */}
+                {selectedIds.size > 0 && (
+                  <div className="mb-3 bg-slate-50 border border-slate-200 rounded-lg p-2 flex items-center gap-3 sticky top-0 z-10">
+                    <span className="text-sm font-medium text-slate-700 ml-2">
+                      {selectedIds.size} selected
+                    </span>
+                    <Button
+                      size="sm"
+                      onClick={handleBulkRestore}
+                      className="h-7 text-xs bg-indigo-600 hover:bg-indigo-700"
+                    >
+                      <RotateCcw className="w-3 h-3 mr-1" />
+                      Restore
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkHardDelete}
+                      className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <Trash className="w-3 h-3 mr-1" />
+                      Delete Permanently
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedIds(new Set())}
+                      className="h-7 text-xs ml-auto"
+                    >
+                      <X className="w-3 h-3 mr-1" />
+                      Clear
+                    </Button>
+                  </div>
+                )}
+
+                {/* Deleted Items List */}
+                {filteredItems.length === 0 ? (
+                   <div className="py-8 text-center text-sm text-slate-400">No items match your search</div>
+                ) : (
+                  <div className="divide-y divide-slate-100 border border-slate-200 rounded-lg">
+                    {filteredItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3 p-3 hover:bg-slate-50">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(item.id)}
+                          onChange={() => toggleSelect(item.id)}
+                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 cursor-pointer"
+                        />
+                        <div className="flex-1 min-w-0">
+                          {renderRow(item)}
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => restoreMut.mutate(item.id)}
+                            title="Restore"
+                          >
+                            <RotateCcw className="w-4 h-4 text-green-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => {
+                              if (confirm('Permanently delete? This cannot be undone!')) {
+                                hardDeleteMut.mutate(item.id);
+                              }
+                            }}
+                            title="Delete Permanently"
+                          >
+                            <Trash className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>

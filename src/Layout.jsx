@@ -18,7 +18,7 @@ const navItems = [
   { name: "Goals", icon: Target, page: "Goals" },
   { name: "Import", icon: Upload, page: "Import" },
   { name: "Rules", icon: Settings, page: "Rules" },
-  { name: "Categories", icon: Palette, page: "Settings" },
+  { name: "Categories", icon: Palette, page: "Categories" }, 
   { name: "Docs", icon: BookOpen, page: "Documentation" },
 ];
 
