@@ -1,20 +1,8 @@
 import React from "react";
 import { formatCurrency } from "../shared/formatters";
-
-const ACCOUNT_TYPE_COLORS = {
-  checking: "#3b82f6",      // blue
-  savings: "#10b981",       // green
-  credit_card: "#ef4444",   // red
-  brokerage: "#8b5cf6",     // purple
-  retirement_401k: "#f59e0b", // amber
-  retirement_ira: "#f97316", // orange
-  hsa: "#06b6d4",          // cyan
-  loan: "#dc2626",         // dark red
-  mortgage: "#991b1b",     // darker red
-  other: "#94a3b8",        // slate
-};
 import { Link } from "react-router-dom";
 import { createPageUrl } from "../../utils";
+import { AccountIcon } from "../../pages/Accounts";
 
 export default function AccountsSummary({ accounts }) {
   return (
@@ -31,12 +19,7 @@ export default function AccountsSummary({ accounts }) {
         <div className="space-y-2">
           {accounts.filter(a => a.is_active !== false).map((acc) => (
             <div key={acc.id} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
-                style={{ backgroundColor: acc.color || ACCOUNT_TYPE_COLORS[acc.account_type] || "#94a3b8" }}
-              >
-                {(acc.name || "?")[0]}
-              </div>
+              <AccountIcon acc={acc} size="w-8 h-8" iconSize="w-4 h-4" textSize="text-xs" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{acc.name}</p>
                 <p className="text-[11px] text-slate-400">{acc.account_type?.replace(/_/g, " ")}</p>

@@ -208,11 +208,15 @@ const initializeDatabase = async () => {
     // Remove UNIQUE constraint from import_hash (migration for existing DBs)
     removeImportHashUniqueConstraint(db);
 
+    // Make institution column nullable (migration for existing DBs)
+    // NOTE: Must run BEFORE addSoftDeleteColumns because it recreates the accounts table
+    makeInstitutionNullable(db);
+
     // Add deleted_at columns for soft-delete (migration for existing DBs)
     addSoftDeleteColumns(db);
 
-    // Make institution column nullable (migration for existing DBs)
-    makeInstitutionNullable(db);
+    // Add icon column to accounts (migration for existing DBs)
+    addAccountIconColumn(db);
 
   } catch (error) {
     console.error('Failed to initialize database:', error.message);
@@ -462,7 +466,7 @@ function makeInstitutionNullable(db) {
     // 1. Rename old table
     db.sqlDb.exec('ALTER TABLE accounts RENAME TO accounts_old');
 
-    // 2. Create new table with institution as nullable
+    // 2. Create new table with institution as nullable (include deleted_at to avoid losing it)
     db.sqlDb.exec(`CREATE TABLE accounts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -477,7 +481,8 @@ function makeInstitutionNullable(db) {
       color TEXT,
       notes TEXT,
       created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now'))
+      updated_at TEXT DEFAULT (datetime('now')),
+      deleted_at TEXT DEFAULT NULL
     )`);
 
     // 3. Copy data from old table
@@ -494,6 +499,23 @@ function makeInstitutionNullable(db) {
     console.log('✓ institution column is now nullable');
   } catch (error) {
     console.error('Error making institution nullable:', error.message);
+  }
+}
+
+/**
+ * Add icon column to accounts table for custom icons/images
+ */
+function addAccountIconColumn(db) {
+  try {
+    const tableInfo = db.prepare('PRAGMA table_info(accounts)').all();
+    const hasIcon = tableInfo.some(col => col.name === 'icon');
+    if (!hasIcon) {
+      db.sqlDb.exec("ALTER TABLE accounts ADD COLUMN icon TEXT DEFAULT NULL");
+      saveToDisk(db.sqlDb);
+      console.log('  ✓ Added icon column to accounts');
+    }
+  } catch (error) {
+    console.error('Error adding account icon column:', error.message);
   }
 }
 
