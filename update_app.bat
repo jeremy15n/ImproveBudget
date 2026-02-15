@@ -21,7 +21,7 @@ if exist ".git" (
     )
 ) else (
     echo [1/4] Skipping git pull — not a git repository.
-    echo       To enable auto-updates, re-install with: git clone https://github.com/yourusername/BetterBudget.git
+    echo       To enable auto-updates, re-install with: git clone https://github.com/jeremy15n/BetterBudget.git
 )
 echo.
 
