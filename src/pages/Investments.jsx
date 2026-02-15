@@ -11,6 +11,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import PageHeader from "../components/shared/PageHeader";
 import StatCard from "../components/shared/StatCard";
 import EmptyState from "../components/shared/EmptyState";
+import RecycleBin from "../components/shared/RecycleBin";
 import { formatCurrency } from "../components/shared/formatters";
 
 const ASSET_CLASSES = ["us_stock", "intl_stock", "bond", "real_estate", "cash", "crypto", "commodity", "other"];
@@ -99,6 +100,21 @@ export default function Investments() {
         subtitle={`${investments.length} holdings`}
         actions={
           <div className="flex gap-2">
+            <RecycleBin
+              entityName="Investment"
+              apiEntity={apiClient.entities.Investment}
+              queryKey={["investments"]}
+              renderRow={(inv) => (
+                <div>
+                  <p className="text-sm font-medium text-slate-700">
+                    {inv.symbol} - {inv.name}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {inv.shares} shares · {formatCurrency(inv.current_value)}
+                  </p>
+                </div>
+              )}
+            />
             <Button onClick={() => refreshMut.mutate()} variant="outline" disabled={refreshMut.isPending}>
               <RefreshCw className={`w-4 h-4 mr-2 ${refreshMut.isPending ? 'animate-spin' : ''}`} />
               Refresh Prices

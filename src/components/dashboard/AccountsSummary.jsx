@@ -1,5 +1,18 @@
 import React from "react";
-import { formatCurrency, INSTITUTION_COLORS } from "../shared/formatters";
+import { formatCurrency } from "../shared/formatters";
+
+const ACCOUNT_TYPE_COLORS = {
+  checking: "#3b82f6",      // blue
+  savings: "#10b981",       // green
+  credit_card: "#ef4444",   // red
+  brokerage: "#8b5cf6",     // purple
+  retirement_401k: "#f59e0b", // amber
+  retirement_ira: "#f97316", // orange
+  hsa: "#06b6d4",          // cyan
+  loan: "#dc2626",         // dark red
+  mortgage: "#991b1b",     // darker red
+  other: "#94a3b8",        // slate
+};
 import { Link } from "react-router-dom";
 import { createPageUrl } from "../../utils";
 
@@ -20,15 +33,15 @@ export default function AccountsSummary({ accounts }) {
             <div key={acc.id} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-slate-50 transition-colors">
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
-                style={{ backgroundColor: acc.color || INSTITUTION_COLORS[acc.institution] || "#94a3b8" }}
+                style={{ backgroundColor: acc.color || ACCOUNT_TYPE_COLORS[acc.account_type] || "#94a3b8" }}
               >
-                {(acc.institution || "?")[0]}
+                {(acc.name || "?")[0]}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-800 truncate">{acc.name}</p>
-                <p className="text-[11px] text-slate-400">{acc.institution} · {acc.account_type?.replace(/_/g, " ")}</p>
+                <p className="text-[11px] text-slate-400">{acc.account_type?.replace(/_/g, " ")}</p>
               </div>
-              <p className={`text-sm font-semibold shrink-0 ${acc.is_asset === false ? "text-red-600" : "text-slate-900"}`}>
+              <p className={`text-sm font-semibold shrink-0 ${!Boolean(acc.is_asset) ? "text-red-600" : "text-slate-900"}`}>
                 {formatCurrency(acc.balance || 0)}
               </p>
             </div>

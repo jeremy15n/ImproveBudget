@@ -3,10 +3,10 @@ import { formatCurrency } from "../shared/formatters";
 import { useCategories } from "../../hooks/useCategories";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Flag, Check, ArrowLeftRight, AlertTriangle, RotateCw, Trash2 } from "lucide-react";
+import { Pencil, Flag, ArrowLeftRight, AlertTriangle, RotateCw, Trash2 } from "lucide-react";
 import moment from "moment";
 
-export default function TransactionRow({ transaction: t, onEdit, onToggleReview, onToggleFlag, onDelete, selected, onToggleSelect }) {
+export default function TransactionRow({ transaction: t, onEdit, onToggleFlag, onDelete, selected, onToggleSelect }) {
   const { categoryColors, getCategoryLabel } = useCategories();
   return (
     <div className={`flex items-center gap-3 py-3 px-3 rounded-xl hover:bg-slate-50 transition-colors ${t.is_duplicate ? "opacity-50" : ""} ${t.is_flagged ? "border-l-2 border-amber-400" : ""} ${selected ? "bg-indigo-50" : ""}`}>
@@ -54,9 +54,6 @@ export default function TransactionRow({ transaction: t, onEdit, onToggleReview,
       </p>
 
       <div className="flex items-center gap-0.5 shrink-0">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onToggleReview(t)}>
-          <Check className={`w-3.5 h-3.5 ${t.is_reviewed ? "text-emerald-500" : "text-slate-300"}`} />
-        </Button>
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onToggleFlag(t)}>
           <Flag className={`w-3.5 h-3.5 ${t.is_flagged ? "text-amber-500" : "text-slate-300"}`} />
         </Button>

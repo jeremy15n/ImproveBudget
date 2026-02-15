@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Progress } from "@/components/ui/progress";
 import PageHeader from "../components/shared/PageHeader";
 import EmptyState from "../components/shared/EmptyState";
+import RecycleBin from "../components/shared/RecycleBin";
 import { formatCurrency } from "../components/shared/formatters";
 import moment from "moment";
 
@@ -49,7 +50,24 @@ export default function Goals() {
       <PageHeader
         title="Financial Goals"
         subtitle="Track progress toward financial independence"
-        actions={<Button onClick={() => setDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="w-4 h-4 mr-2" />Add Goal</Button>}
+        actions={
+          <div className="flex items-center gap-2">
+            <RecycleBin
+              entityName="Goal"
+              apiEntity={apiClient.entities.FinancialGoal}
+              queryKey={["goals"]}
+              renderRow={(goal) => (
+                <div>
+                  <p className="text-sm font-medium text-slate-700">{goal.name}</p>
+                  <p className="text-xs text-slate-400">
+                    Target: {formatCurrency(goal.target_amount)} by {goal.target_date}
+                  </p>
+                </div>
+              )}
+            />
+            <Button onClick={() => setDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="w-4 h-4 mr-2" />Add Goal</Button>
+          </div>
+        }
       />
 
       {goals.length === 0 && !isLoading ? (

@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useCategories } from "../../hooks/useCategories";
 
@@ -75,16 +74,6 @@ export default function TransactionEditDialog({ transaction, open, onClose, onSa
                 <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>{accounts.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
               </Select>
-            </div>
-          </div>
-          <div className="flex gap-6">
-            <div className="flex items-center gap-2">
-              <Switch checked={form.is_recurring || false} onCheckedChange={(v) => setForm({ ...form, is_recurring: v })} />
-              <Label className="text-sm">Recurring</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch checked={form.is_transfer || false} onCheckedChange={(v) => setForm({ ...form, is_transfer: v, type: v ? "transfer" : form.type })} />
-              <Label className="text-sm">Transfer</Label>
             </div>
           </div>
           <div className="grid gap-2">

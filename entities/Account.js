@@ -70,7 +70,6 @@
   },
   "required": [
     "name",
-    "institution",
     "account_type"
   ]
 }

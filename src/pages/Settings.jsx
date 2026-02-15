@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import PageHeader from "../components/shared/PageHeader";
+import RecycleBin from "../components/shared/RecycleBin";
 
 export default function Settings() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -63,12 +64,28 @@ export default function Settings() {
   return (
     <div>
       <PageHeader
-        title="Settings"
+        title="Categories"
         subtitle="Manage your spending categories"
         actions={
-          <Button onClick={() => setDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
-            <Plus className="w-4 h-4 mr-2" />Add Category
-          </Button>
+          <div className="flex items-center gap-2">
+            <RecycleBin
+              entityName="Category"
+              apiEntity={apiClient.entities.Category}
+              queryKey={["categories"]}
+              renderRow={(cat) => (
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: cat.color }}
+                  />
+                  <p className="text-sm font-medium text-slate-700">{cat.name}</p>
+                </div>
+              )}
+            />
+            <Button onClick={() => setDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+              <Plus className="w-4 h-4 mr-2" />Add Category
+            </Button>
+          </div>
         }
       />
 

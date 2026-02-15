@@ -183,6 +183,40 @@ node -v          # Need 18+
 cd backend && rm -rf node_modules && npm install && cd ..
 ```
 
+## How to Upgrade
+
+Since your database (`budget.db`) is strictly separated from the code via `.gitignore`, you can upgrade the application without losing any personal data. Choose the method that matches your installation type.
+
+### Option 1: Git / Source Code Installation
+*Use this if you are running the app directly on your machine or server using Node.js.*
+
+1.  **Stop the Application**
+    Stop the currently running process.
+
+2.  **Pull the Latest Code**
+    Download the newest version from GitHub.
+    ```bash
+    git pull origin main
+    ```
+
+3.  **Update Dependencies**
+    Install any new libraries for both the frontend and backend.
+    ```bash
+    npm install
+    cd backend && npm install && cd ..
+    ```
+
+4.  **Restart the Application**
+    Start the app again. Any necessary database migrations (like new columns) will run automatically on startup.
+    ```bash
+    # For development:
+    npm run dev
+
+    # For production:
+    npm run build
+    npm start
+    ```
+
 ## Further Reading
 
 - [API Documentation](backend/API.md) — Full endpoint reference

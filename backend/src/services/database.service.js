@@ -27,8 +27,25 @@ export class DatabaseService {
       const escapedTable = this.escapeTableName(table);
       const params = [];
 
-      // Build WHERE clause
-      const whereClause = this.buildWhereClause(filters, params);
+      // Handle soft-delete filtering (values may be boolean or string from query params)
+      const includeDeleted = filters._include_deleted === true || filters._include_deleted === 'true';
+      const onlyDeleted = filters._only_deleted === true || filters._only_deleted === 'true';
+      delete filters._include_deleted;
+      delete filters._only_deleted;
+
+      // Build WHERE clause from filters
+      let whereClause = this.buildWhereClause(filters, params);
+
+      // Add deleted_at filter
+      if (!includeDeleted) {
+        const deletedFilter = onlyDeleted
+          ? `deleted_at IS NOT NULL`
+          : `deleted_at IS NULL`;
+        whereClause = whereClause
+          ? `${whereClause} AND ${deletedFilter}`
+          : deletedFilter;
+      }
+
       const whereSQL = whereClause ? ` WHERE ${whereClause}` : '';
 
       // Build ORDER BY
@@ -216,7 +233,7 @@ export class DatabaseService {
   }
 
   /**
-   * Delete multiple records by IDs
+   * Soft-delete multiple records by IDs
    */
   bulkDelete(table, ids) {
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -225,7 +242,11 @@ export class DatabaseService {
 
     try {
       const placeholders = ids.map(() => '?').join(', ');
-      const stmt = this.db.prepare(`DELETE FROM ${this.escapeTableName(table)} WHERE id IN (${placeholders})`);
+      const stmt = this.db.prepare(`
+        UPDATE ${this.escapeTableName(table)}
+        SET deleted_at = datetime('now')
+        WHERE id IN (${placeholders})
+      `);
       stmt.run(...ids);
       return { deleted: ids.length };
     } catch (error) {
@@ -234,18 +255,112 @@ export class DatabaseService {
   }
 
   /**
-   * Delete a record by ID
+   * Soft-delete a record by ID
    * @param {string} table - Table name
    * @param {number} id - Record ID
    * @returns {boolean} Success
    */
   delete(table, id) {
     try {
-      const stmt = this.db.prepare(`DELETE FROM ${this.escapeTableName(table)} WHERE id = ?`);
+      const stmt = this.db.prepare(`
+        UPDATE ${this.escapeTableName(table)}
+        SET deleted_at = datetime('now')
+        WHERE id = ?
+      `);
       stmt.run(id);
       return true;
     } catch (error) {
       throw new Error(`Failed to delete from ${table}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Restore a soft-deleted record
+   * @param {string} table - Table name
+   * @param {number} id - Record ID
+   * @returns {boolean} Success
+   */
+  restore(table, id) {
+    try {
+      const stmt = this.db.prepare(`
+        UPDATE ${this.escapeTableName(table)}
+        SET deleted_at = NULL
+        WHERE id = ?
+      `);
+      stmt.run(id);
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to restore ${table}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Restore multiple soft-deleted records
+   * @param {string} table - Table name
+   * @param {array} ids - Array of record IDs
+   * @returns {object} {restored: count}
+   */
+  bulkRestore(table, ids) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return { restored: 0 };
+    }
+
+    try {
+      const placeholders = ids.map(() => '?').join(', ');
+      const stmt = this.db.prepare(`
+        UPDATE ${this.escapeTableName(table)}
+        SET deleted_at = NULL
+        WHERE id IN (${placeholders})
+      `);
+      stmt.run(...ids);
+      return { restored: ids.length };
+    } catch (error) {
+      throw new Error(`Failed to bulk restore from ${table}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Permanently delete a record (hard delete)
+   * WARNING: This cannot be undone
+   * @param {string} table - Table name
+   * @param {number} id - Record ID
+   * @returns {boolean} Success
+   */
+  hardDelete(table, id) {
+    try {
+      const stmt = this.db.prepare(`
+        DELETE FROM ${this.escapeTableName(table)}
+        WHERE id = ?
+      `);
+      stmt.run(id);
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to hard delete from ${table}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Permanently delete multiple records (hard delete)
+   * WARNING: This cannot be undone
+   * @param {string} table - Table name
+   * @param {array} ids - Array of record IDs
+   * @returns {object} {deleted: count}
+   */
+  bulkHardDelete(table, ids) {
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return { deleted: 0 };
+    }
+
+    try {
+      const placeholders = ids.map(() => '?').join(', ');
+      const stmt = this.db.prepare(`
+        DELETE FROM ${this.escapeTableName(table)}
+        WHERE id IN (${placeholders})
+      `);
+      stmt.run(...ids);
+      return { deleted: ids.length };
+    } catch (error) {
+      throw new Error(`Failed to bulk hard delete from ${table}: ${error.message}`);
     }
   }
 

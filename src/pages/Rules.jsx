@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import PageHeader from "../components/shared/PageHeader";
 import EmptyState from "../components/shared/EmptyState";
+import RecycleBin from "../components/shared/RecycleBin";
 import { useCategories } from "../hooks/useCategories";
 import { toast } from "sonner";
 
@@ -109,6 +110,21 @@ export default function Rules() {
         subtitle={`${rules.length} rules · Auto-categorize your transactions`}
         actions={
           <div className="flex gap-2">
+            <RecycleBin
+              entityName="Rule"
+              apiEntity={apiClient.entities.CategoryRule}
+              queryKey={["rules"]}
+              renderRow={(rule) => (
+                <div>
+                  <p className="text-sm font-medium text-slate-700">
+                    {rule.match_pattern}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {rule.match_type} → {getCategoryLabel(rule.category)}
+                  </p>
+                </div>
+              )}
+            />
             <Button variant="outline" onClick={runRules} disabled={running || rules.length === 0}>
               {running ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
               Run Rules

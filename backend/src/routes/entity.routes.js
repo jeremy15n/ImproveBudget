@@ -7,7 +7,11 @@ import {
   bulkUpdateEntities,
   bulkDeleteEntities,
   updateEntity,
-  deleteEntity
+  deleteEntity,
+  restoreEntity,
+  bulkRestoreEntities,
+  hardDeleteEntity,
+  bulkHardDeleteEntities
 } from '../controllers/entity.controller.js';
 
 const router = express.Router();
@@ -65,6 +69,18 @@ router.put('/:entity/bulk-update', validateEntity, bulkUpdateEntities);
 
 // Bulk delete entities
 router.post('/:entity/bulk-delete', validateEntity, bulkDeleteEntities);
+
+// Restore soft-deleted entity
+router.put('/:entity/:id/restore', validateEntity, restoreEntity);
+
+// Bulk restore
+router.post('/:entity/bulk-restore', validateEntity, bulkRestoreEntities);
+
+// Permanent delete
+router.delete('/:entity/:id/permanent', validateEntity, hardDeleteEntity);
+
+// Bulk permanent delete
+router.post('/:entity/bulk-permanent-delete', validateEntity, bulkHardDeleteEntities);
 
 // Update entity
 router.put('/:entity/:id', validateEntity, updateEntity);

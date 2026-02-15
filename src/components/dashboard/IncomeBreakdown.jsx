@@ -29,7 +29,7 @@ export default function IncomeBreakdown({ transactions, startDate, endDate }) {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
-      <h3 className="text-sm font-semibold text-slate-900 mb-4">Income by Category</h3>
+      <h3 className="text-sm font-semibold text-slate-900 mb-4">Income</h3>
       {data.length === 0 ? (
         <p className="text-sm text-slate-400 text-center py-10">No income data for this period</p>
       ) : (

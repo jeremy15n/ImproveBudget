@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, PieChart, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, PieChart, Pencil, Trash2, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Progress } from "@/components/ui/progress";
 import PageHeader from "../components/shared/PageHeader";
 import EmptyState from "../components/shared/EmptyState";
+import RecycleBin from "../components/shared/RecycleBin";
 import { formatCurrency } from "../components/shared/formatters";
 import { useCategories } from "../hooks/useCategories";
 import moment from "moment";
@@ -20,11 +21,26 @@ export default function Budget() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ category: "groceries", monthly_limit: 0, month: selectedMonth });
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+  const [copySource, setCopySource] = useState("");
+  const [copyTargetStart, setCopyTargetStart] = useState("");
+  const [copyTargetEnd, setCopyTargetEnd] = useState("");
   const qc = useQueryClient();
 
   const prevMonth = moment(selectedMonth, "YYYY-MM").subtract(1, "month").format("YYYY-MM");
   const isCurrentMonth = selectedMonth === moment().format("YYYY-MM");
   const isFuture = moment(selectedMonth, "YYYY-MM").isAfter(moment(), "month");
+
+  // Generate month strip: 3 months before, current view, 3 months after
+  const monthStrip = useMemo(() => {
+    const base = moment(selectedMonth, "YYYY-MM");
+    const months = [];
+    for (let i = -3; i <= 3; i++) {
+      const m = base.clone().add(i, "month");
+      months.push(m.format("YYYY-MM"));
+    }
+    return months;
+  }, [selectedMonth]);
 
   // Fetch budgets for selected month
   const { data: budgets = [], isLoading: loadingBudgets } = useQuery({
@@ -68,6 +84,70 @@ export default function Budget() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["budgets"] }),
   });
 
+  const copyBudgetMut = useMutation({
+    mutationFn: async ({ source, targetStart, targetEnd }) => {
+      const sourceBudgets = await apiClient.entities.Budget.filter({ month: source });
+      if (sourceBudgets.length === 0) throw new Error("No budgets found in source month");
+      // Build list of target months from start through end
+      const targets = [];
+      const cursor = moment(targetStart, "YYYY-MM");
+      const end = moment(targetEnd || targetStart, "YYYY-MM");
+      while (cursor.isSameOrBefore(end, "month")) {
+        const m = cursor.format("YYYY-MM");
+        if (m !== source) targets.push(m);
+        cursor.add(1, "month");
+      }
+      if (targets.length === 0) throw new Error("No valid target months");
+      const items = targets.flatMap(month =>
+        sourceBudgets.map(b => ({
+          category: b.category,
+          monthly_limit: b.monthly_limit,
+          month,
+          is_active: b.is_active ?? true,
+          rollover: b.rollover ?? false,
+          notes: b.notes || "",
+        }))
+      );
+      return apiClient.entities.Budget.bulkCreate(items);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["budgets"] });
+      setCopyDialogOpen(false);
+    },
+  });
+
+  const openCopyDialog = () => {
+    setCopySource(prevMonth);
+    setCopyTargetStart(selectedMonth);
+    setCopyTargetEnd(selectedMonth);
+    setCopyDialogOpen(true);
+  };
+
+  // Compute target month count for display
+  const copyTargetCount = useMemo(() => {
+    if (!copyTargetStart || !copyTargetEnd) return 0;
+    const start = moment(copyTargetStart, "YYYY-MM");
+    const end = moment(copyTargetEnd, "YYYY-MM");
+    if (end.isBefore(start)) return 0;
+    let count = 0;
+    const cursor = start.clone();
+    while (cursor.isSameOrBefore(end, "month")) {
+      if (cursor.format("YYYY-MM") !== copySource) count++;
+      cursor.add(1, "month");
+    }
+    return count;
+  }, [copyTargetStart, copyTargetEnd, copySource]);
+
+  // Generate month options for copy dialog (12 months back, 6 forward)
+  const copyMonthOptions = useMemo(() => {
+    const months = [];
+    for (let i = -12; i <= 6; i++) {
+      const m = moment().add(i, "month").format("YYYY-MM");
+      months.push(m);
+    }
+    return months;
+  }, []);
+
   const closeDialog = () => {
     setDialogOpen(false);
     setEditing(null);
@@ -109,25 +189,64 @@ export default function Budget() {
           ? `${displayMonth} · Planned: ${formatCurrency(totalBudget)}`
           : `${displayMonth} · ${formatCurrency(totalSpent)} of ${formatCurrency(totalBudget)} spent`
         }
-        actions={<Button onClick={openAddDialog} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="w-4 h-4 mr-2" />Add Budget</Button>}
+        actions={
+          <div className="flex items-center gap-2">
+            <RecycleBin
+              entityName="Budget"
+              apiEntity={apiClient.entities.Budget}
+              queryKey={["budgets"]}
+              renderRow={(b) => (
+                <div>
+                  <p className="text-sm font-medium text-slate-700">
+                    {getCategoryLabel(b.category)}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {b.month} · Limit: {formatCurrency(b.monthly_limit)}
+                  </p>
+                </div>
+              )}
+            />
+            <Button variant="outline" size="sm" onClick={openCopyDialog}>
+              <Copy className="w-4 h-4 mr-1.5" />Copy Month
+            </Button>
+            <Button onClick={openAddDialog} className="bg-indigo-600 hover:bg-indigo-700" size="sm">
+              <Plus className="w-4 h-4 mr-1.5" />Add Budget
+            </Button>
+          </div>
+        }
       />
 
-      {/* Month Selector */}
-      <div className="flex items-center justify-center gap-4 mb-4">
-        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateMonth(-1)}>
+      {/* Month Navigation Strip */}
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigateMonth(-1)}>
           <ChevronLeft className="w-4 h-4" />
         </Button>
-        <button
-          onClick={() => setSelectedMonth(moment().format("YYYY-MM"))}
-          className={`text-sm font-semibold px-3 py-1 rounded-lg transition-colors ${isCurrentMonth ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-100"}`}
-        >
-          {displayMonth}
-        </button>
-        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateMonth(1)}>
+        <div className="flex items-center gap-1 overflow-x-auto px-1">
+          {monthStrip.map((m) => {
+            const isCurrent = m === moment().format("YYYY-MM");
+            const isSelected = m === selectedMonth;
+            return (
+              <button
+                key={m}
+                onClick={() => setSelectedMonth(m)}
+                className={`whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-lg transition-colors shrink-0 ${
+                  isSelected
+                    ? "bg-indigo-600 text-white"
+                    : isCurrent
+                    ? "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                    : "text-slate-500 hover:bg-slate-100"
+                }`}
+              >
+                {moment(m, "YYYY-MM").format("MMM YYYY")}
+              </button>
+            );
+          })}
+        </div>
+        <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => navigateMonth(1)}>
           <ChevronRight className="w-4 h-4" />
         </Button>
         {!isCurrentMonth && (
-          <Button variant="ghost" size="sm" className="text-xs text-indigo-600" onClick={() => setSelectedMonth(moment().format("YYYY-MM"))}>
+          <Button variant="ghost" size="sm" className="text-xs text-indigo-600 shrink-0" onClick={() => setSelectedMonth(moment().format("YYYY-MM"))}>
             Today
           </Button>
         )}
@@ -213,6 +332,84 @@ export default function Budget() {
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
             <Button onClick={() => editing ? updateMut.mutate({ id: editing.id, d: form }) : createMut.mutate(form)} className="bg-indigo-600 hover:bg-indigo-700">{editing ? "Update" : "Create"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Copy Budget Dialog */}
+      <Dialog open={copyDialogOpen} onOpenChange={setCopyDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Copy Budget to Other Months</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-4">
+            <p className="text-sm text-slate-500">
+              Copy all budget items from a source month to one or more target months. Select a range to copy to multiple months at once.
+            </p>
+            <div className="grid gap-2">
+              <Label>Copy From</Label>
+              <Select value={copySource} onValueChange={setCopySource}>
+                <SelectTrigger><SelectValue placeholder="Select source month" /></SelectTrigger>
+                <SelectContent>
+                  {copyMonthOptions.map((m) => (
+                    <SelectItem key={m} value={m}>{moment(m, "YYYY-MM").format("MMMM YYYY")}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label>Start Month</Label>
+                <Select value={copyTargetStart} onValueChange={(v) => {
+                  setCopyTargetStart(v);
+                  if (!copyTargetEnd || moment(v, "YYYY-MM").isAfter(moment(copyTargetEnd, "YYYY-MM"))) {
+                    setCopyTargetEnd(v);
+                  }
+                }}>
+                  <SelectTrigger><SelectValue placeholder="From" /></SelectTrigger>
+                  <SelectContent>
+                    {copyMonthOptions.map((m) => (
+                      <SelectItem key={m} value={m}>{moment(m, "YYYY-MM").format("MMM YYYY")}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Through Month</Label>
+                <Select value={copyTargetEnd} onValueChange={setCopyTargetEnd}>
+                  <SelectTrigger><SelectValue placeholder="Through" /></SelectTrigger>
+                  <SelectContent>
+                    {copyMonthOptions
+                      .filter((m) => !copyTargetStart || moment(m, "YYYY-MM").isSameOrAfter(moment(copyTargetStart, "YYYY-MM")))
+                      .map((m) => (
+                        <SelectItem key={m} value={m}>{moment(m, "YYYY-MM").format("MMM YYYY")}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {copyTargetCount > 0 && (
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 text-center">
+                <span className="text-xs text-indigo-700 font-medium">
+                  Will copy budget to {copyTargetCount} month{copyTargetCount !== 1 ? "s" : ""}
+                  {copyTargetCount === 1
+                    ? `: ${moment(copyTargetStart, "YYYY-MM").format("MMMM YYYY")}`
+                    : `: ${moment(copyTargetStart, "YYYY-MM").format("MMM YYYY")} — ${moment(copyTargetEnd, "YYYY-MM").format("MMM YYYY")}`
+                  }
+                </span>
+              </div>
+            )}
+            {copyTargetCount === 0 && copyTargetStart && (
+              <p className="text-xs text-amber-600">No valid target months. The source month is excluded from the range.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCopyDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => copyBudgetMut.mutate({ source: copySource, targetStart: copyTargetStart, targetEnd: copyTargetEnd })}
+              disabled={!copySource || !copyTargetStart || !copyTargetEnd || copyTargetCount === 0 || copyBudgetMut.isPending}
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              {copyBudgetMut.isPending ? "Copying..." : `Copy to ${copyTargetCount} Month${copyTargetCount !== 1 ? "s" : ""}`}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

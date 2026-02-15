@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { name: "Dashboard", icon: LayoutDashboard, page: "Dashboard" },
   { name: "Transactions", icon: ArrowLeftRight, page: "Transactions" },
-  { name: "Accounts", icon: Wallet, page: "Accounts" },
+  { name: "Accounts & Assets", icon: Wallet, page: "Accounts" },
   { name: "Budget", icon: PieChart, page: "Budget" },
   { name: "Investments", icon: TrendingUp, page: "Investments" },
   { name: "Net Worth", icon: LineChart, page: "NetWorth" },

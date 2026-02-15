@@ -1,17 +1,20 @@
 import React, { useState, useCallback } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftRight, Trash2, X, Tag, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeftRight, Trash2, X, Tag, RefreshCw, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import PageHeader from "../components/shared/PageHeader";
 import EmptyState from "../components/shared/EmptyState";
+import RecycleBin from "../components/shared/RecycleBin";
 import TransactionFilters from "../components/transactions/TransactionFilters";
 import TransactionRow from "../components/transactions/TransactionRow";
 import TransactionEditDialog from "../components/transactions/TransactionEditDialog";
+import TransactionAddDialog from "../components/transactions/TransactionAddDialog";
 import { formatCurrency, getCategoryLabel } from "../components/shared/formatters";
 import { useCategories } from "../hooks/useCategories";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import moment from "moment";
 
 const TYPES = ["income", "expense", "savings", "transfer", "refund"];
 const PAGE_SIZES = [50, 100, 200];
@@ -24,6 +27,7 @@ export default function Transactions() {
   const [editTx, setEditTx] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const qc = useQueryClient();
 
   // Build server-side filters
@@ -76,6 +80,14 @@ export default function Transactions() {
       qc.invalidateQueries({ queryKey: ["transactions"] });
       setSelectedIds(new Set());
     },
+  });
+
+  const createMut = useMutation({
+    mutationFn: (items) =>
+      items.length === 1
+        ? apiClient.entities.Transaction.create(items[0])
+        : apiClient.entities.Transaction.bulkCreate(items),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["transactions"] }),
   });
 
   const bulkDeleteMut = useMutation({
@@ -139,6 +151,33 @@ export default function Transactions() {
       <PageHeader
         title="Transactions"
         subtitle={`${meta.total} transactions`}
+        actions={
+          <div className="flex items-center gap-2">
+            <RecycleBin
+              entityName="Transaction"
+              apiEntity={apiClient.entities.Transaction}
+              queryKey={["transactions"]}
+              renderRow={(tx) => (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-700">
+                      {tx.merchant_clean || tx.merchant_raw || 'Unknown'}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {tx.date} · {formatCurrency(tx.amount)}
+                    </p>
+                  </div>
+                  <span className="text-xs text-slate-400">
+                    Deleted {moment(tx.deleted_at).fromNow()}
+                  </span>
+                </div>
+              )}
+            />
+            <Button className="bg-indigo-600 hover:bg-indigo-700" size="sm" onClick={() => setShowAddDialog(true)}>
+              <Plus className="w-4 h-4 mr-1.5" /> Add Transaction
+            </Button>
+          </div>
+        }
       />
       <TransactionFilters filters={filters} setFilters={handleFilterChange} accounts={accounts} />
 
@@ -212,7 +251,6 @@ export default function Transactions() {
               selected={selectedIds.has(t.id)}
               onToggleSelect={toggleSelect}
               onEdit={setEditTx}
-              onToggleReview={(tx) => updateMut.mutate({ id: tx.id, d: { is_reviewed: !tx.is_reviewed } })}
               onToggleFlag={(tx) => updateMut.mutate({ id: tx.id, d: { is_flagged: !tx.is_flagged } })}
               onDelete={(tx) => deleteMut.mutate(tx.id)}
             />
@@ -270,6 +308,13 @@ export default function Transactions() {
         open={!!editTx}
         onClose={() => setEditTx(null)}
         onSave={(data) => updateMut.mutate({ id: data.id, d: data })}
+        accounts={accounts}
+      />
+
+      <TransactionAddDialog
+        open={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onSave={(items) => createMut.mutate(items)}
         accounts={accounts}
       />
     </div>

@@ -217,3 +217,111 @@ export const deleteEntity = (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Restore a soft-deleted entity
+ * PUT /api/{entity}/{id}/restore
+ */
+export const restoreEntity = (req, res, next) => {
+  try {
+    const { table } = req;
+    const { id } = req.params;
+
+    // Check if entity exists and is deleted
+    const existing = dbService.list(table, { id, _include_deleted: true });
+    if (!existing || existing.length === 0) {
+      return res.status(404).json({
+        error: true,
+        message: `${table} not found`,
+        id
+      });
+    }
+
+    if (!existing[0].deleted_at) {
+      return res.status(400).json({
+        error: true,
+        message: `${table} is not deleted`,
+        id
+      });
+    }
+
+    dbService.restore(table, id);
+    res.json({ restored: true, id });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Bulk restore soft-deleted entities
+ * POST /api/{entity}/bulk-restore
+ * Body: { ids: [...] }
+ */
+export const bulkRestoreEntities = (req, res, next) => {
+  try {
+    const { table } = req;
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        error: true,
+        message: 'ids array is required'
+      });
+    }
+
+    const result = dbService.bulkRestore(table, ids);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Permanently delete an entity (hard delete)
+ * DELETE /api/{entity}/{id}/permanent
+ */
+export const hardDeleteEntity = (req, res, next) => {
+  try {
+    const { table } = req;
+    const { id } = req.params;
+
+    // Check if entity exists
+    const existing = dbService.list(table, { id, _include_deleted: true });
+    if (!existing || existing.length === 0) {
+      return res.status(404).json({
+        error: true,
+        message: `${table} not found`,
+        id
+      });
+    }
+
+    dbService.hardDelete(table, id);
+    res.json({ deleted: true, permanent: true, id });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Bulk permanent delete entities
+ * POST /api/{entity}/bulk-permanent-delete
+ * Body: { ids: [...] }
+ */
+export const bulkHardDeleteEntities = (req, res, next) => {
+  try {
+    const { table } = req;
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        error: true,
+        message: 'ids array is required'
+      });
+    }
+
+    const result = dbService.bulkHardDelete(table, ids);
+    res.json({ ...result, permanent: true });
+  } catch (error) {
+    next(error);
+  }
+};

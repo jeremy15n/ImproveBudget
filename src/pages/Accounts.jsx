@@ -10,13 +10,26 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import PageHeader from "../components/shared/PageHeader";
 import EmptyState from "../components/shared/EmptyState";
-import { formatCurrency, INSTITUTION_COLORS } from "../components/shared/formatters";
+import RecycleBin from "../components/shared/RecycleBin";
+import { formatCurrency } from "../components/shared/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const INSTITUTIONS = ["AMEX", "USAA", "Abound Credit Union", "PayPal Savings", "Fidelity", "Schwab", "Other"];
 const ACCOUNT_TYPES = ["checking", "savings", "credit_card", "brokerage", "retirement_401k", "retirement_ira", "hsa", "loan", "mortgage", "other"];
 
-const emptyAccount = { name: "", institution: "AMEX", account_type: "checking", balance: 0, is_asset: true, is_active: true, account_number_last4: "", notes: "" };
+const ACCOUNT_TYPE_COLORS = {
+  checking: "#3b82f6",      // blue
+  savings: "#10b981",       // green
+  credit_card: "#ef4444",   // red
+  brokerage: "#8b5cf6",     // purple
+  retirement_401k: "#f59e0b", // amber
+  retirement_ira: "#f97316", // orange
+  hsa: "#06b6d4",          // cyan
+  loan: "#dc2626",         // dark red
+  mortgage: "#991b1b",     // darker red
+  other: "#94a3b8",        // slate
+};
+
+const emptyAccount = { name: "", account_type: "checking", balance: 0, is_asset: true, is_active: true, account_number_last4: "", notes: "" };
 
 export default function Accounts() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -44,21 +57,38 @@ export default function Accounts() {
 
   const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm(emptyAccount); };
   const openCreate = () => { setForm(emptyAccount); setEditing(null); setDialogOpen(true); };
-  const openEdit = (acc) => { setForm(acc); setEditing(acc); setDialogOpen(true); };
+  const openEdit = (acc) => { setForm({ ...acc, is_asset: Boolean(acc.is_asset) }); setEditing(acc); setDialogOpen(true); };
   const handleSave = () => {
     if (editing) updateMut.mutate({ id: editing.id, d: form });
     else createMut.mutate(form);
   };
 
-  const totalAssets = accounts.filter(a => a.is_asset !== false && a.is_active !== false).reduce((s, a) => s + (a.balance || 0), 0);
-  const totalLiabilities = accounts.filter(a => a.is_asset === false && a.is_active !== false).reduce((s, a) => s + (a.balance || 0), 0);
+  const totalAssets = accounts.filter(a => Boolean(a.is_asset) && a.is_active !== false).reduce((s, a) => s + (a.balance || 0), 0);
+  const totalLiabilities = accounts.filter(a => !Boolean(a.is_asset) && a.is_active !== false).reduce((s, a) => s + Math.abs(a.balance || 0), 0);
 
   return (
     <div>
       <PageHeader
-        title="Accounts"
+        title="Accounts & Assets"
         subtitle={`${accounts.length} accounts · Net: ${formatCurrency(totalAssets - totalLiabilities)}`}
-        actions={<Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="w-4 h-4 mr-2" />Add Account</Button>}
+        actions={
+          <div className="flex items-center gap-2">
+            <RecycleBin
+              entityName="Account"
+              apiEntity={apiClient.entities.Account}
+              queryKey={["accounts"]}
+              renderRow={(acc) => (
+                <div>
+                  <p className="text-sm font-medium text-slate-700">{acc.name}</p>
+                  <p className="text-xs text-slate-400">
+                    {acc.account_type?.replace(/_/g, " ")} · {formatCurrency(acc.balance)}
+                  </p>
+                </div>
+              )}
+            />
+            <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="w-4 h-4 mr-2" />Add Account</Button>
+          </div>
+        }
       />
 
       {isLoading ? (
@@ -69,14 +99,14 @@ export default function Accounts() {
         <div className="grid gap-3">
           {accounts.map((acc) => (
             <div key={acc.id} className="bg-white rounded-2xl border border-slate-200/60 p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: acc.color || INSTITUTION_COLORS[acc.institution] || "#94a3b8" }}>
-                {(acc.institution || "?")[0]}
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ backgroundColor: acc.color || ACCOUNT_TYPE_COLORS[acc.account_type] || "#94a3b8" }}>
+                {(acc.name || "?")[0]}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-900">{acc.name}</p>
-                <p className="text-xs text-slate-500">{acc.institution} · {acc.account_type?.replace(/_/g, " ")} {acc.account_number_last4 ? `· ••${acc.account_number_last4}` : ""}</p>
+                <p className="text-xs text-slate-500">{acc.account_type?.replace(/_/g, " ")} {acc.account_number_last4 ? `· ••${acc.account_number_last4}` : ""}</p>
               </div>
-              <p className={`text-lg font-bold shrink-0 ${acc.is_asset === false ? "text-red-600" : "text-slate-900"}`}>
+              <p className={`text-lg font-bold shrink-0 ${!Boolean(acc.is_asset) ? "text-red-600" : "text-slate-900"}`}>
                 {formatCurrency(acc.balance || 0)}
               </p>
               <div className="flex items-center gap-1 shrink-0">
@@ -98,21 +128,12 @@ export default function Accounts() {
               <Label>Name</Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g., AMEX Platinum" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label>Institution</Label>
-                <Select value={form.institution} onValueChange={(v) => setForm({ ...form, institution: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{INSTITUTIONS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
-                <Label>Type</Label>
-                <Select value={form.account_type} onValueChange={(v) => setForm({ ...form, account_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{ACCOUNT_TYPES.map((t) => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
+            <div className="grid gap-2">
+              <Label>Type</Label>
+              <Select value={form.account_type} onValueChange={(v) => setForm({ ...form, account_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{ACCOUNT_TYPES.map((t) => <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
@@ -125,8 +146,8 @@ export default function Accounts() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Switch checked={form.is_asset !== false} onCheckedChange={(v) => setForm({ ...form, is_asset: v })} />
-              <Label className="text-sm">{form.is_asset !== false ? "Asset (adds to net worth)" : "Liability (subtracts from net worth)"}</Label>
+              <Switch checked={Boolean(form.is_asset)} onCheckedChange={(v) => setForm({ ...form, is_asset: v })} />
+              <Label className="text-sm">{form.is_asset ? "Asset (adds to net worth)" : "Liability (subtracts from net worth)"}</Label>
             </div>
           </div>
           <DialogFooter>

@@ -116,6 +116,40 @@ class Entity {
     const url = `${this.endpoint}/bulk-delete`;
     return this.request('POST', url, { ids });
   }
+
+  async restore(id) {
+    const url = `${this.endpoint}/${id}/restore`;
+    return this.request('PUT', url);
+  }
+
+  async bulkRestore(ids) {
+    const url = `${this.endpoint}/bulk-restore`;
+    return this.request('POST', url, { ids });
+  }
+
+  async hardDelete(id) {
+    const url = `${this.endpoint}/${id}/permanent`;
+    return this.request('DELETE', url);
+  }
+
+  async bulkHardDelete(ids) {
+    const url = `${this.endpoint}/bulk-permanent-delete`;
+    return this.request('POST', url, { ids });
+  }
+
+  async listDeleted(sortField = '-deleted_at', limit = 500) {
+    const params = new URLSearchParams();
+    params.append('_only_deleted', 'true');
+    if (sortField) {
+      params.append('sort_by', sortField.replace(/^-/, ''));
+      params.append('sort_order', sortField.startsWith('-') ? 'desc' : 'asc');
+    }
+    if (limit) {
+      params.append('limit', limit);
+    }
+    const url = `${this.endpoint}?${params.toString()}`;
+    return this.request('GET', url);
+  }
 }
 
 class APIClient {

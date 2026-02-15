@@ -94,7 +94,7 @@ export default function NetWorth() {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <StatCard label="Live Net Worth" value={formatCurrency(currentNW)} icon={TrendingUp} trend={nwChangePct} trendLabel={latest ? `vs last snapshot (${moment(latest.date).format("MMM D")})` : 'No snapshots yet'} iconBg="bg-indigo-50" iconColor="text-indigo-600" />
+        <StatCard label="Net Worth" value={formatCurrency(currentNW)} icon={TrendingUp} trend={nwChangePct} trendLabel={latest ? `vs last snapshot (${moment(latest.date).format("MMM D")})` : 'No snapshots yet'} iconBg="bg-indigo-50" iconColor="text-indigo-600" />
         <StatCard label="Total Assets" value={formatCurrency(totalAssets)} icon={TrendingUp} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
         <StatCard label="Total Liabilities" value={formatCurrency(totalLiabilities)} icon={TrendingDown} iconBg="bg-red-50" iconColor="text-red-500" />
       </div>
@@ -124,7 +124,7 @@ export default function NetWorth() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
-          <h3 className="text-sm font-semibold text-emerald-700 mb-4">Assets</h3>
+          <h3 className="text-sm font-semibold text-emerald-700 mb-4">Asset Breakdown</h3>
           {assets.length === 0 ? <p className="text-sm text-slate-400">No asset accounts</p> : (
             <div className="space-y-3">
               {assets.map(a => (
@@ -141,7 +141,7 @@ export default function NetWorth() {
           )}
         </div>
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
-          <h3 className="text-sm font-semibold text-red-600 mb-4">Liabilities</h3>
+          <h3 className="text-sm font-semibold text-red-600 mb-4">Liability Breakdown</h3>
           {liabilities.length === 0 ? <p className="text-sm text-slate-400">No liability accounts</p> : (
             <div className="space-y-3">
               {liabilities.map(a => (

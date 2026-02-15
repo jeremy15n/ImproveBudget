@@ -208,6 +208,12 @@ const initializeDatabase = async () => {
     // Remove UNIQUE constraint from import_hash (migration for existing DBs)
     removeImportHashUniqueConstraint(db);
 
+    // Add deleted_at columns for soft-delete (migration for existing DBs)
+    addSoftDeleteColumns(db);
+
+    // Make institution column nullable (migration for existing DBs)
+    makeInstitutionNullable(db);
+
   } catch (error) {
     console.error('Failed to initialize database:', error.message);
     throw error;
@@ -358,6 +364,94 @@ function removeImportHashUniqueConstraint(db) {
     console.log('✓ import_hash UNIQUE constraint removed');
   } catch (error) {
     console.error('Error removing import_hash UNIQUE constraint:', error.message);
+  }
+}
+
+/**
+ * Add deleted_at columns for soft-delete functionality
+ */
+function addSoftDeleteColumns(db) {
+  try {
+    const tables = [
+      'transactions', 'accounts', 'budgets', 'investments',
+      'financialgoals', 'categoryrules', 'categories'
+    ];
+
+    for (const table of tables) {
+      // Check if column already exists
+      const tableInfo = db.prepare(`PRAGMA table_info(${table})`).all();
+      const hasDeletedAt = tableInfo.some(col => col.name === 'deleted_at');
+
+      if (!hasDeletedAt) {
+        db.sqlDb.exec(`ALTER TABLE ${table} ADD COLUMN deleted_at TEXT DEFAULT NULL`);
+        db.sqlDb.exec(`CREATE INDEX IF NOT EXISTS idx_${table}_deleted_at ON ${table}(deleted_at)`);
+        console.log(`  ✓ Added deleted_at to ${table}`);
+      }
+    }
+
+    saveToDisk(db.sqlDb);
+    console.log('✓ Soft-delete columns added successfully');
+  } catch (error) {
+    console.error('Error adding soft-delete columns:', error.message);
+  }
+}
+
+/**
+ * Make institution column nullable in accounts table
+ * (Institution field was removed from UI, should be optional)
+ */
+function makeInstitutionNullable(db) {
+  try {
+    // Check if institution column is NOT NULL
+    const tableInfo = db.sqlDb.exec("SELECT sql FROM sqlite_master WHERE type='table' AND name='accounts'");
+    if (!tableInfo || !tableInfo[0] || !tableInfo[0].values || !tableInfo[0].values[0]) {
+      return;
+    }
+
+    const createTableSQL = tableInfo[0].values[0][0];
+    if (!createTableSQL.includes('institution TEXT NOT NULL')) {
+      console.log('✓ institution column already nullable');
+      return;
+    }
+
+    console.log('Migrating accounts table to make institution nullable...');
+
+    // SQLite doesn't support ALTER COLUMN, so we need to recreate the table
+    // 1. Rename old table
+    db.sqlDb.exec('ALTER TABLE accounts RENAME TO accounts_old');
+
+    // 2. Create new table with institution as nullable
+    db.sqlDb.exec(`CREATE TABLE accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      institution TEXT,
+      account_type TEXT NOT NULL,
+      balance REAL NOT NULL DEFAULT 0,
+      currency TEXT DEFAULT 'USD',
+      is_asset INTEGER DEFAULT 1,
+      is_active INTEGER DEFAULT 1,
+      last_synced TEXT,
+      account_number_last4 TEXT,
+      color TEXT,
+      notes TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`);
+
+    // 3. Copy data from old table
+    db.sqlDb.exec(`INSERT INTO accounts SELECT * FROM accounts_old`);
+
+    // 4. Recreate indexes
+    db.sqlDb.exec('CREATE INDEX IF NOT EXISTS idx_accounts_is_active ON accounts(is_active)');
+    db.sqlDb.exec('CREATE INDEX IF NOT EXISTS idx_accounts_institution ON accounts(institution)');
+
+    // 5. Drop old table
+    db.sqlDb.exec('DROP TABLE accounts_old');
+
+    saveToDisk(db.sqlDb);
+    console.log('✓ institution column is now nullable');
+  } catch (error) {
+    console.error('Error making institution nullable:', error.message);
   }
 }
 
