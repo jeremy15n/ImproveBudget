@@ -28,8 +28,8 @@ export default function IncomeBreakdown({ transactions, startDate, endDate }) {
   const total = data.reduce((s, d) => s + d.value, 0);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
-      <h3 className="text-sm font-semibold text-slate-900 mb-4">Income</h3>
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5">
+      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Income</h3>
       {data.length === 0 ? (
         <p className="text-sm text-slate-400 text-center py-10">No income data for this period</p>
       ) : (
@@ -49,10 +49,10 @@ export default function IncomeBreakdown({ transactions, startDate, endDate }) {
               <div key={d.key} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: categoryColors[d.key] || "#cbd5e1" }} />
-                  <span className="text-slate-600 truncate">{d.name}</span>
+                  <span className="text-slate-600 dark:text-slate-400 truncate">{d.name}</span>
                 </div>
                 <div className="text-right shrink-0 ml-2">
-                  <span className="font-medium text-slate-900">{formatCurrency(d.value)}</span>
+                  <span className="font-medium text-slate-900 dark:text-slate-100">{formatCurrency(d.value)}</span>
                   <span className="text-slate-400 ml-1">({((d.value / total) * 100).toFixed(0)}%)</span>
                 </div>
               </div>

@@ -13,9 +13,9 @@ export default function CashFlowChart({ data = [], isLoading = false }) {
   }));
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-slate-900">Cash Flow</h3>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Cash Flow</h3>
       </div>
 
       {isLoading ? (

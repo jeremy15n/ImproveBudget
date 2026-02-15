@@ -18,9 +18,9 @@ import { createPageUrl } from "../../utils";
 
 export default function AccountsSummary({ accounts }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-slate-900">Accounts</h3>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Accounts</h3>
         <Link to={createPageUrl("Accounts")} className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
           Manage →
         </Link>
@@ -30,7 +30,7 @@ export default function AccountsSummary({ accounts }) {
       ) : (
         <div className="space-y-2">
           {accounts.filter(a => a.is_active !== false).map((acc) => (
-            <div key={acc.id} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-slate-50 transition-colors">
+            <div key={acc.id} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
                 style={{ backgroundColor: acc.color || ACCOUNT_TYPE_COLORS[acc.account_type] || "#94a3b8" }}
@@ -38,10 +38,10 @@ export default function AccountsSummary({ accounts }) {
                 {(acc.name || "?")[0]}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-800 truncate">{acc.name}</p>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{acc.name}</p>
                 <p className="text-[11px] text-slate-400">{acc.account_type?.replace(/_/g, " ")}</p>
               </div>
-              <p className={`text-sm font-semibold shrink-0 ${!Boolean(acc.is_asset) ? "text-red-600" : "text-slate-900"}`}>
+              <p className={`text-sm font-semibold shrink-0 ${!Boolean(acc.is_asset) ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-slate-100"}`}>
                 {formatCurrency(acc.balance || 0)}
               </p>
             </div>

@@ -186,16 +186,16 @@ export default function Transactions() {
 
       {/* Pagination Controls - TOP */}
       {meta.total > 0 && (
-        <div className="flex items-center justify-between mb-4 bg-white rounded-2xl border border-slate-200/60 p-2.5 px-4 shadow-sm">
+        <div className="flex items-center justify-between mb-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-2.5 px-4 shadow-sm">
           <div className="flex items-center gap-3">
             <span className="text-xs text-slate-500 font-medium">
-              Showing <span className="text-slate-900">{startItem}–{endItem}</span> of {meta.total}
+              Showing <span className="text-slate-900 dark:text-slate-100">{startItem}–{endItem}</span> of {meta.total}
             </span>
             <div className="h-4 w-px bg-slate-200 mx-1" />
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400">Show</span>
               <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
-                <SelectTrigger className="w-16 h-7 text-xs bg-slate-50 border-slate-200">
+                <SelectTrigger className="w-16 h-7 text-xs bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -236,11 +236,11 @@ export default function Transactions() {
 
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="mb-3 bg-indigo-50 border border-indigo-200 rounded-xl p-3 flex items-center gap-3 flex-wrap animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="mb-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-xl p-3 flex items-center gap-3 flex-wrap animate-in fade-in slide-in-from-top-2 duration-200">
           <span className="text-sm font-medium text-indigo-700">{selectedIds.size} selected</span>
 
           <Select onValueChange={handleBulkCategory}>
-            <SelectTrigger className="w-44 h-8 text-xs bg-white">
+            <SelectTrigger className="w-44 h-8 text-xs bg-white dark:bg-slate-800">
               <Tag className="w-3 h-3 mr-1" />
               <SelectValue placeholder="Change Category" />
             </SelectTrigger>
@@ -252,7 +252,7 @@ export default function Transactions() {
           </Select>
 
           <Select onValueChange={handleBulkType}>
-            <SelectTrigger className="w-40 h-8 text-xs bg-white">
+            <SelectTrigger className="w-40 h-8 text-xs bg-white dark:bg-slate-800">
               <RefreshCw className="w-3 h-3 mr-1" />
               <SelectValue placeholder="Change Type" />
             </SelectTrigger>
@@ -286,9 +286,9 @@ export default function Transactions() {
       ) : transactions.length === 0 ? (
         <EmptyState icon={ArrowLeftRight} title="No transactions found" description="Adjust your filters or import data." />
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200/60 divide-y divide-slate-100">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
           {/* Select All header */}
-          <div className="flex items-center gap-3 py-2 px-3 bg-slate-50/50 rounded-t-2xl">
+          <div className="flex items-center gap-3 py-2 px-3 bg-slate-50/50 dark:bg-slate-800/50 rounded-t-2xl">
             <input
               type="checkbox"
               checked={selectedIds.size === transactions.length && transactions.length > 0}

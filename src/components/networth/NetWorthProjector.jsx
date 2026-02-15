@@ -56,13 +56,13 @@ export default function NetWorthProjector({ currentNetWorth, monthlyIncome, mont
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
             <Calculator className="w-4 h-4 text-indigo-600" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">Net Worth Projections</h3>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Net Worth Projections</h3>
             <p className="text-xs text-slate-500">Model different financial scenarios</p>
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function NetWorthProjector({ currentNetWorth, monthlyIncome, mont
             <Label className="text-xs">Expected Annual Return (%)</Label>
             <div className="flex items-center gap-2">
               <Slider value={[annualReturn]} onValueChange={(v) => setAnnualReturn(v[0])} min={0} max={15} step={0.5} className="flex-1" />
-              <span className="text-xs font-medium text-slate-700 w-10">{annualReturn}%</span>
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-300 w-10">{annualReturn}%</span>
             </div>
           </div>
         </div>
@@ -109,12 +109,12 @@ export default function NetWorthProjector({ currentNetWorth, monthlyIncome, mont
             <TrendingUp className="w-4 h-4 text-slate-400" />
             <span className="text-xs font-medium text-slate-500">Current Trajectory</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 mb-1">{formatCurrency(finalCurrent)}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">{formatCurrency(finalCurrent)}</p>
           <p className="text-xs text-slate-500">in {projectionYears} years</p>
-          <p className="text-xs text-slate-600 mt-2">Savings rate: <span className="font-semibold">{currentSavingsRate.toFixed(1)}%</span></p>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">Savings rate: <span className="font-semibold">{currentSavingsRate.toFixed(1)}%</span></p>
         </Card>
 
-        <Card className="p-5 border-indigo-200 bg-indigo-50/50">
+        <Card className="p-5 border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/30">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="w-4 h-4 text-indigo-600" />
             <span className="text-xs font-medium text-indigo-700">Optimized Plan</span>
@@ -128,19 +128,19 @@ export default function NetWorthProjector({ currentNetWorth, monthlyIncome, mont
         <Card className="p-5">
           <div className="space-y-2">
             <div className="flex justify-between text-xs">
-              <span className="text-slate-600">Current Monthly Savings:</span>
-              <span className="font-semibold text-slate-900">{formatCurrency(currentMonthlySavings)}</span>
+              <span className="text-slate-600 dark:text-slate-400">Current Monthly Savings:</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(currentMonthlySavings)}</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-slate-600">+ Additional Savings:</span>
+              <span className="text-slate-600 dark:text-slate-400">+ Additional Savings:</span>
               <span className="font-semibold text-emerald-600">+{formatCurrency(additionalSavings)}</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-slate-600">+ Expense Cuts:</span>
+              <span className="text-slate-600 dark:text-slate-400">+ Expense Cuts:</span>
               <span className="font-semibold text-emerald-600">+{formatCurrency(expenseReduction)}</span>
             </div>
-            <div className="border-t border-slate-200 pt-2 flex justify-between text-xs">
-              <span className="font-medium text-slate-700">New Monthly Savings:</span>
+            <div className="border-t border-slate-200 dark:border-slate-700 pt-2 flex justify-between text-xs">
+              <span className="font-medium text-slate-700 dark:text-slate-300">New Monthly Savings:</span>
               <span className="font-bold text-indigo-600">{formatCurrency(currentMonthlySavings + additionalSavings + expenseReduction)}</span>
             </div>
             <div className="text-xs text-slate-500 mt-3">

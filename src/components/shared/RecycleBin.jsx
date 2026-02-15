@@ -107,7 +107,7 @@ export default function RecycleBin({ entityName, apiEntity, renderRow, queryKey 
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader className="pb-4 border-b border-slate-100">
+          <DialogHeader className="pb-4 border-b border-slate-100 dark:border-slate-800">
             <DialogTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Trash2 className="w-5 h-5 text-slate-600" />
@@ -139,8 +139,8 @@ export default function RecycleBin({ entityName, apiEntity, renderRow, queryKey 
               <div className="flex-1 overflow-auto flex flex-col min-h-0">
                 {/* Bulk Actions */}
                 {selectedIds.size > 0 && (
-                  <div className="mb-3 bg-slate-50 border border-slate-200 rounded-lg p-2 flex items-center gap-3 sticky top-0 z-10">
-                    <span className="text-sm font-medium text-slate-700 ml-2">
+                  <div className="mb-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 flex items-center gap-3 sticky top-0 z-10">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200 ml-2">
                       {selectedIds.size} selected
                     </span>
                     <Button
@@ -176,9 +176,9 @@ export default function RecycleBin({ entityName, apiEntity, renderRow, queryKey 
                 {filteredItems.length === 0 ? (
                    <div className="py-8 text-center text-sm text-slate-400">No items match your search</div>
                 ) : (
-                  <div className="divide-y divide-slate-100 border border-slate-200 rounded-lg">
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
                     {filteredItems.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 p-3 hover:bg-slate-50">
+                      <div key={item.id} className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800">
                         <input
                           type="checkbox"
                           checked={selectedIds.has(item.id)}

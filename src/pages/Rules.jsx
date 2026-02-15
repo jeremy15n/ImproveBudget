@@ -139,10 +139,10 @@ export default function Rules() {
       ) : (
         <div className="space-y-2">
           {rules.map((r) => (
-            <div key={r.id} className="bg-white rounded-2xl border border-slate-200/60 p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
+            <div key={r.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-slate-800">"{r.match_pattern}"</span>
+                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">"{r.match_pattern}"</span>
                   <Badge variant="outline" className="text-[10px]">{r.match_type}</Badge>
                   <span className="text-slate-300">→</span>
                   <Badge style={{ backgroundColor: `${categoryColors[r.category] || "#cbd5e1"}20`, color: categoryColors[r.category] || "#64748b" }} className="text-[10px]">{getCategoryLabel(r.category)}</Badge>

@@ -61,8 +61,8 @@ export default function CsvImporter({ accounts, onImportComplete }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 p-6">
-      <h3 className="text-sm font-semibold text-slate-900 mb-4">Import CSV / Excel</h3>
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-6">
+      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Import CSV / Excel</h3>
       <p className="text-xs text-slate-500 mb-6">Upload bank statements in CSV or XLSX format. Our AI will automatically parse and categorize your transactions.</p>
 
       <div className="space-y-4">

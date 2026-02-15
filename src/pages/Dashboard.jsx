@@ -124,15 +124,15 @@ export default function Dashboard() {
 
       {/* Global Date Filter */}
       <div className="flex items-center gap-3 mb-5">
-        <div className="flex bg-slate-100 rounded-lg p-0.5">
+        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
           {FILTER_MODES.map((mode) => (
             <button
               key={mode.value}
               onClick={() => setFilterMode(mode.value)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 filterMode === mode.value
-                  ? "bg-white shadow-sm text-slate-900"
-                  : "text-slate-500 hover:text-slate-700"
+                  ? "bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-slate-100"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               }`}
             >
               {mode.label}

@@ -9,7 +9,7 @@ import moment from "moment";
 export default function TransactionRow({ transaction: t, onEdit, onToggleFlag, onDelete, selected, onToggleSelect }) {
   const { categoryColors, getCategoryLabel } = useCategories();
   return (
-    <div className={`flex items-center gap-3 py-3 px-3 rounded-xl hover:bg-slate-50 transition-colors ${t.is_duplicate ? "opacity-50" : ""} ${t.is_flagged ? "border-l-2 border-amber-400" : ""} ${selected ? "bg-indigo-50" : ""}`}>
+    <div className={`flex items-center gap-3 py-3 px-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${t.is_duplicate ? "opacity-50" : ""} ${t.is_flagged ? "border-l-2 border-amber-400" : ""} ${selected ? "bg-indigo-50 dark:bg-indigo-950/50" : ""}`}>
       {onToggleSelect && (
         <input
           type="checkbox"
@@ -30,7 +30,7 @@ export default function TransactionRow({ transaction: t, onEdit, onToggleFlag, o
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-slate-800 truncate">{t.merchant_clean || t.merchant_raw || "Unknown"}</p>
+          <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{t.merchant_clean || t.merchant_raw || "Unknown"}</p>
           {t.is_duplicate && <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-600">Duplicate</Badge>}
           {t.is_flagged && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
         </div>
@@ -49,7 +49,7 @@ export default function TransactionRow({ transaction: t, onEdit, onToggleFlag, o
         {getCategoryLabel(t.category)}
       </Badge>
 
-      <p className={`text-sm font-semibold w-24 text-right shrink-0 ${t.amount >= 0 ? "text-emerald-600" : "text-slate-900"}`}>
+      <p className={`text-sm font-semibold w-24 text-right shrink-0 ${t.amount >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-slate-100"}`}>
         {t.amount >= 0 ? "+" : ""}{formatCurrency(t.amount)}
       </p>
 

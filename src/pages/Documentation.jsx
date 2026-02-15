@@ -377,22 +377,22 @@ export default function Documentation() {
 
       <div className="space-y-2">
         {sections.map((section, idx) => (
-          <div key={idx} className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
+          <div key={idx} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 overflow-hidden">
             <button
               onClick={() => toggle(idx)}
-              className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors text-left"
+              className="w-full flex items-center justify-between p-5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
                   <BookOpen className="w-4 h-4 text-indigo-600" />
                 </div>
-                <span className="text-sm font-semibold text-slate-900">{section.title}</span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{section.title}</span>
               </div>
               {openSections.has(idx) ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
             </button>
             {openSections.has(idx) && (
               <div className="px-5 pb-6 pt-0">
-                <div className="prose prose-sm prose-slate max-w-none [&_table]:text-xs [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_table]:border [&_th]:border [&_td]:border [&_th]:bg-slate-50">
+                <div className="prose prose-sm prose-slate dark:prose-invert max-w-none [&_table]:text-xs [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_table]:border [&_th]:border [&_td]:border [&_th]:bg-slate-50 dark:[&_th]:bg-slate-800">
                   <ReactMarkdown>{section.content}</ReactMarkdown>
                 </div>
               </div>

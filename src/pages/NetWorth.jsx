@@ -111,9 +111,9 @@ export default function NetWorth() {
         <StatCard label="Total Liabilities" value={formatCurrency(totalLiabilities)} icon={TrendingDown} iconBg="bg-red-50" iconColor="text-red-500" />
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200/60 p-5 mb-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5 mb-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-sm font-semibold text-slate-900">Net Worth History</h3>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Net Worth History</h3>
           
           <div className="flex items-center gap-2">
             <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -181,9 +181,9 @@ export default function NetWorth() {
       {/* Asset / Liability Breakdown - MOVED UP */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Assets */}
-        <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-emerald-700">Asset Breakdown</h3>
+            <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Asset Breakdown</h3>
             <span className="text-xs font-medium bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full">{assets.length} Accounts</span>
           </div>
           
@@ -191,12 +191,12 @@ export default function NetWorth() {
             <div className="space-y-3">
               {assets.map(a => (
                 <div key={a.id} className="flex items-center justify-between group">
-                  <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">{a.name}</span>
-                  <span className="text-sm font-semibold text-slate-900">{formatCurrency(a.balance || 0)}</span>
+                  <span className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">{a.name}</span>
+                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(a.balance || 0)}</span>
                 </div>
               ))}
-              <div className="border-t border-slate-100 pt-3 flex items-center justify-between mt-2">
-                <span className="text-sm font-semibold text-slate-900">Total Assets</span>
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex items-center justify-between mt-2">
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Total Assets</span>
                 <span className="text-sm font-bold text-emerald-600">{formatCurrency(totalAssets)}</span>
               </div>
             </div>
@@ -204,9 +204,9 @@ export default function NetWorth() {
         </div>
 
         {/* Liabilities */}
-        <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-red-600">Liability Breakdown</h3>
+            <h3 className="text-sm font-semibold text-red-600 dark:text-red-400">Liability Breakdown</h3>
             <span className="text-xs font-medium bg-red-50 text-red-600 px-2 py-1 rounded-full">{liabilities.length} Accounts</span>
           </div>
 
@@ -214,12 +214,12 @@ export default function NetWorth() {
             <div className="space-y-3">
               {liabilities.map(a => (
                 <div key={a.id} className="flex items-center justify-between group">
-                  <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">{a.name}</span>
-                  <span className="text-sm font-semibold text-red-600">{formatCurrency(a.balance || 0)}</span>
+                  <span className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">{a.name}</span>
+                  <span className="text-sm font-semibold text-red-600 dark:text-red-400">{formatCurrency(a.balance || 0)}</span>
                 </div>
               ))}
-              <div className="border-t border-slate-100 pt-3 flex items-center justify-between mt-2">
-                <span className="text-sm font-semibold text-slate-900">Total Liabilities</span>
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex items-center justify-between mt-2">
+                <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Total Liabilities</span>
                 <span className="text-sm font-bold text-red-600">{formatCurrency(totalLiabilities)}</span>
               </div>
             </div>

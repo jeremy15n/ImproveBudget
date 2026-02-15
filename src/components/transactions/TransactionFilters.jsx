@@ -10,7 +10,7 @@ export default function TransactionFilters({ filters, setFilters, accounts }) {
   const { categoryList, getCategoryLabel } = useCategories();
   
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 p-4 mb-4">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-4 mb-4">
       <div className="flex flex-wrap gap-3">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">

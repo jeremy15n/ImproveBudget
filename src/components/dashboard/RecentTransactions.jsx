@@ -10,9 +10,9 @@ export default function RecentTransactions({ transactions }) {
   const recent = transactions.slice(0, 8);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-slate-900">Recent Transactions</h3>
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Recent Transactions</h3>
         <Link to={createPageUrl("Transactions")} className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
           View all →
         </Link>
@@ -22,7 +22,7 @@ export default function RecentTransactions({ transactions }) {
       ) : (
         <div className="space-y-1">
           {recent.map((t) => (
-            <div key={t.id} className="flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-slate-50 transition-colors">
+            <div key={t.id} className="flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                 t.type === "transfer" ? "bg-slate-100" :
                 t.amount > 0 ? "bg-emerald-50" : "bg-red-50"
@@ -36,11 +36,11 @@ export default function RecentTransactions({ transactions }) {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-800 truncate">{t.merchant_clean || t.merchant_raw || "Unknown"}</p>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{t.merchant_clean || t.merchant_raw || "Unknown"}</p>
                 <p className="text-[11px] text-slate-400">{moment(t.date).format("MMM D")} · {t.account_name || "—"}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className={`text-sm font-semibold ${t.amount >= 0 ? "text-emerald-600" : "text-slate-900"}`}>
+                <p className={`text-sm font-semibold ${t.amount >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-slate-100"}`}>
                   {t.amount >= 0 ? "+" : ""}{formatCurrency(t.amount)}
                 </p>
                 <p className="text-[10px] text-slate-400">{getCategoryLabel(t.category)}</p>

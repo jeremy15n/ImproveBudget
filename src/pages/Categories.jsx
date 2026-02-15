@@ -88,23 +88,23 @@ export default function Categories() {
         }
       />
 
-      <div className="bg-white rounded-2xl border border-slate-200/60 divide-y divide-slate-100">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
         <div className="px-5 py-3">
-          <h3 className="text-sm font-semibold text-slate-700">Categories</h3>
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Categories</h3>
           <p className="text-xs text-slate-400 mt-0.5">Customize your spending categories and their colors</p>
         </div>
         {isLoading ? (
           <div className="p-8 text-center text-sm text-slate-400">Loading categories...</div>
         ) : (
           categories.map((cat) => (
-            <div key={cat.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 transition-colors">
+            <div key={cat.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
               <div className="w-5 h-5 rounded-md border border-slate-200 shrink-0" style={{ backgroundColor: cat.color }} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-800">{cat.label}</p>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{cat.label}</p>
                 <p className="text-[11px] text-slate-400">{cat.name}</p>
               </div>
               {cat.is_default ? (
-                <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">Default</span>
+                <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full shrink-0">Default</span>
               ) : null}
               <div className="flex items-center gap-1 shrink-0">
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(cat)}>
