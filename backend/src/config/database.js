@@ -372,9 +372,11 @@ function removeImportHashUniqueConstraint(db) {
  */
 function addSoftDeleteColumns(db) {
   try {
+    // FIX: Added 'networthsnapshots' to this list so the column gets added
     const tables = [
       'transactions', 'accounts', 'budgets', 'investments',
-      'financialgoals', 'categoryrules', 'categories'
+      'financialgoals', 'categoryrules', 'categories',
+      'networthsnapshots'
     ];
 
     for (const table of tables) {
@@ -383,14 +385,19 @@ function addSoftDeleteColumns(db) {
       const hasDeletedAt = tableInfo.some(col => col.name === 'deleted_at');
 
       if (!hasDeletedAt) {
-        db.sqlDb.exec(`ALTER TABLE ${table} ADD COLUMN deleted_at TEXT DEFAULT NULL`);
-        db.sqlDb.exec(`CREATE INDEX IF NOT EXISTS idx_${table}_deleted_at ON ${table}(deleted_at)`);
-        console.log(`  ✓ Added deleted_at to ${table}`);
+        // If table doesn't exist yet, this might fail, so we catch it
+        try {
+            db.sqlDb.exec(`ALTER TABLE ${table} ADD COLUMN deleted_at TEXT DEFAULT NULL`);
+            db.sqlDb.exec(`CREATE INDEX IF NOT EXISTS idx_${table}_deleted_at ON ${table}(deleted_at)`);
+            console.log(`  ✓ Added deleted_at to ${table}`);
+        } catch (e) {
+            // Table might not exist yet if schema hasn't run, that's fine
+        }
       }
     }
 
     saveToDisk(db.sqlDb);
-    console.log('✓ Soft-delete columns added successfully');
+    console.log('✓ Soft-delete columns checked');
   } catch (error) {
     console.error('Error adding soft-delete columns:', error.message);
   }

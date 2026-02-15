@@ -21,7 +21,7 @@ const PAGE_SIZES = [50, 100, 200];
 
 export default function Transactions() {
   const { categoryList } = useCategories();
-  const [filters, setFilters] = useState({ search: "", category: "all", type: "all", account: "all" });
+  const [filters, setFilters] = useState({ search: "", category: "all", type: "all", account: "all", status: "all" });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [editTx, setEditTx] = useState(null);
@@ -36,6 +36,9 @@ export default function Transactions() {
   if (filters.type !== "all") serverFilters.type = filters.type;
   if (filters.account !== "all") serverFilters.account_id = filters.account;
   if (filters.search) serverFilters.search = filters.search;
+  
+  // FIX: Send 1 instead of true for SQLite compatibility
+  if (filters.status === "flagged") serverFilters.is_flagged = 1;
 
   const { data: result, isLoading } = useQuery({
     queryKey: ["transactions", page, pageSize, serverFilters],
@@ -142,7 +145,7 @@ export default function Transactions() {
     bulkDeleteMut.mutate(ids);
   };
 
-  // Pagination display
+  // Pagination display calculation
   const startItem = meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1;
   const endItem = Math.min(meta.page * meta.limit, meta.total);
 
@@ -181,9 +184,59 @@ export default function Transactions() {
       />
       <TransactionFilters filters={filters} setFilters={handleFilterChange} accounts={accounts} />
 
+      {/* Pagination Controls - TOP */}
+      {meta.total > 0 && (
+        <div className="flex items-center justify-between mb-4 bg-white rounded-2xl border border-slate-200/60 p-2.5 px-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-500 font-medium">
+              Showing <span className="text-slate-900">{startItem}–{endItem}</span> of {meta.total}
+            </span>
+            <div className="h-4 w-px bg-slate-200 mx-1" />
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">Show</span>
+              <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
+                <SelectTrigger className="w-16 h-7 text-xs bg-slate-50 border-slate-200">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZES.map(s => (
+                    <SelectItem key={s} value={String(s)}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 mr-2">
+              Page {meta.page} of {meta.totalPages}
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7 border-slate-200"
+                disabled={meta.page <= 1}
+                onClick={() => setPage(p => p - 1)}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7 border-slate-200"
+                disabled={meta.page >= meta.totalPages}
+                onClick={() => setPage(p => p + 1)}
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bulk Action Bar */}
       {selectedIds.size > 0 && (
-        <div className="mb-3 bg-indigo-50 border border-indigo-200 rounded-xl p-3 flex items-center gap-3 flex-wrap">
+        <div className="mb-3 bg-indigo-50 border border-indigo-200 rounded-xl p-3 flex items-center gap-3 flex-wrap animate-in fade-in slide-in-from-top-2 duration-200">
           <span className="text-sm font-medium text-indigo-700">{selectedIds.size} selected</span>
 
           <Select onValueChange={handleBulkCategory}>
@@ -231,18 +284,18 @@ export default function Transactions() {
       {isLoading ? (
         <div className="space-y-2">{Array(5).fill(0).map((_, i) => <Skeleton key={i} className="h-14 rounded-xl" />)}</div>
       ) : transactions.length === 0 ? (
-        <EmptyState icon={ArrowLeftRight} title="No transactions found" description="Import your bank data from the Import page to get started." />
+        <EmptyState icon={ArrowLeftRight} title="No transactions found" description="Adjust your filters or import data." />
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200/60 divide-y divide-slate-100">
           {/* Select All header */}
-          <div className="flex items-center gap-3 py-2 px-3">
+          <div className="flex items-center gap-3 py-2 px-3 bg-slate-50/50 rounded-t-2xl">
             <input
               type="checkbox"
               checked={selectedIds.size === transactions.length && transactions.length > 0}
               onChange={toggleSelectAll}
               className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
             />
-            <span className="text-xs text-slate-400 font-medium">Select All</span>
+            <span className="text-xs text-slate-500 font-medium">Select All on Page</span>
           </div>
           {transactions.map((t) => (
             <TransactionRow
@@ -255,51 +308,6 @@ export default function Transactions() {
               onDelete={(tx) => deleteMut.mutate(tx.id)}
             />
           ))}
-        </div>
-      )}
-
-      {/* Pagination Controls */}
-      {meta.total > 0 && (
-        <div className="flex items-center justify-between mt-4 bg-white rounded-2xl border border-slate-200/60 p-3">
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-500">
-              Showing {startItem}–{endItem} of {meta.total}
-            </span>
-            <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
-              <SelectTrigger className="w-20 h-7 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAGE_SIZES.map(s => (
-                  <SelectItem key={s} value={String(s)}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <span className="text-xs text-slate-400">per page</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500">
-              Page {meta.page} of {meta.totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              disabled={meta.page <= 1}
-              onClick={() => setPage(p => p - 1)}
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7"
-              disabled={meta.page >= meta.totalPages}
-              onClick={() => setPage(p => p + 1)}
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Button>
-          </div>
         </div>
       )}
 

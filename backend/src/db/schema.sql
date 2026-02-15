@@ -163,8 +163,10 @@ CREATE TABLE IF NOT EXISTS networthsnapshots (
   accounts_breakdown TEXT,
   month TEXT NOT NULL,
   created_at TEXT DEFAULT (datetime('now')),
-  updated_at TEXT DEFAULT (datetime('now'))
+  updated_at TEXT DEFAULT (datetime('now')),
+  deleted_at TEXT DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_networthsnapshots_date ON networthsnapshots(date DESC);
 CREATE INDEX IF NOT EXISTS idx_networthsnapshots_month ON networthsnapshots(month);
+CREATE INDEX IF NOT EXISTS idx_networthsnapshots_deleted_at ON networthsnapshots(deleted_at);
