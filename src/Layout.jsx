@@ -4,7 +4,7 @@ import { createPageUrl } from "./utils";
 import {
   LayoutDashboard, ArrowLeftRight, Wallet, PieChart, TrendingUp,
   Target, LineChart, Upload, Settings, BookOpen, Menu, X, ChevronRight,
-  DollarSign, Palette
+  Palette
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +18,7 @@ const navItems = [
   { name: "Goals", icon: Target, page: "Goals" },
   { name: "Import", icon: Upload, page: "Import" },
   { name: "Rules", icon: Settings, page: "Rules" },
-  { name: "Categories", icon: Palette, page: "Categories" }, 
+  { name: "Categories", icon: Palette, page: "Categories" },
   { name: "Docs", icon: BookOpen, page: "Documentation" },
 ];
 
@@ -49,12 +49,16 @@ export default function Layout({ children, currentPageName }) {
         <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 rounded-xl hover:bg-slate-100 transition-colors">
           <Menu className="w-5 h-5 text-slate-700" />
         </button>
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center">
-            <DollarSign className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-semibold text-slate-900 tracking-tight">BetterBudget</span>
+        
+        {/* LOGO UPDATE: Mobile Center (Increased height to h-10) */}
+        <div className="flex items-center">
+          <img 
+            src="/logo.png" 
+            alt="BetterBudget" 
+            className="h-10 w-auto object-contain"
+          />
         </div>
+        
         <div className="w-9" />
       </div>
 
@@ -86,15 +90,15 @@ function SidebarContent({ currentPageName, onClose }) {
   return (
     <div className="flex flex-col h-full">
       <div className="p-5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <DollarSign className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="font-bold text-slate-900 tracking-tight text-lg">BetterBudget</h1>
-            <p className="text-[11px] text-slate-400 -mt-0.5">Personal Finance</p>
-          </div>
+        {/* LOGO UPDATE: Sidebar Header (Increased height to h-20) */}
+        <div className="flex items-center">
+          <img 
+            src="/logo.png" 
+            alt="BetterBudget" 
+            className="h-20 w-auto object-contain" 
+          />
         </div>
+
         {onClose && (
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 lg:hidden">
             <X className="w-4 h-4 text-slate-500" />
