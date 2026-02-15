@@ -32,23 +32,22 @@ export default function NetWorth() {
   });
 
   const syncBalancesMut = useMutation({
-    mutationFn: () => apiClient.post('/accounts/sync-balances'),
+    // FIX 1: Send the current CLIENT date to the backend
+    mutationFn: () => apiClient.post('/accounts/sync-balances', { 
+      date: moment().format("YYYY-MM-DD") 
+    }),
     onSuccess: () => {
-      // Invalidate accounts (balances updated) and snapshots (new snapshot created)
       qc.invalidateQueries({ queryKey: ["accounts"] });
       qc.invalidateQueries({ queryKey: ["nw-snapshots"] });
     },
   });
 
-  // Helper to safely check boolean/integer flags from SQLite
   const isTrue = (val) => val === 1 || val === true || val === "true";
   const isFalse = (val) => val === 0 || val === false || val === "false";
 
-  // Filter Assets vs Liabilities correctly handling 0/1 integers
   const assets = accounts.filter(a => isTrue(a.is_asset) && !isFalse(a.is_active));
   const liabilities = accounts.filter(a => isFalse(a.is_asset) && !isFalse(a.is_active));
 
-  // Get unique years from snapshots for the filter
   const availableYears = useMemo(() => {
     const years = new Set(snapshots.map(s => moment(s.date).format("YYYY")));
     const currentYear = moment().format("YYYY");
@@ -56,7 +55,6 @@ export default function NetWorth() {
     return Array.from(years).sort().reverse();
   }, [snapshots]);
 
-  // Filter chart data based on selection
   const chartData = useMemo(() => {
     let data = snapshots;
     
@@ -65,7 +63,9 @@ export default function NetWorth() {
     }
 
     return data.map(s => ({
-      date: moment(s.date).format(selectedYear === "all" ? "MMM YY" : "MMM D"),
+      // FIX 2: Better date formatting for graph
+      // If "All Time", show "Feb 14, 26". If specific year, show "Feb 14"
+      date: moment(s.date).format(selectedYear === "all" ? "MMM D, YY" : "MMM D"),
       fullDate: moment(s.date).format("MMMM D, YYYY"),
       netWorth: s.net_worth,
       assets: s.total_assets,
@@ -82,7 +82,6 @@ export default function NetWorth() {
   const nwChange = lastSnapshotNW ? currentNW - lastSnapshotNW : null;
   const nwChangePct = lastSnapshotNW ? (nwChange / Math.abs(lastSnapshotNW)) * 100 : null;
 
-  // Calculate monthly income and expenses for projections
   const currentMonth = moment().format("YYYY-MM");
   const monthTx = transactions.filter((t) => moment(t.date).format("YYYY-MM") === currentMonth && t.type !== "transfer");
   const monthlyIncome = monthTx.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
@@ -101,7 +100,6 @@ export default function NetWorth() {
         </>}
       />
 
-      {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard 
           label="Net Worth" 
@@ -116,7 +114,6 @@ export default function NetWorth() {
         <StatCard label="Total Liabilities" value={formatCurrency(totalLiabilities)} icon={TrendingDown} iconBg="bg-red-50" iconColor="text-red-500" />
       </div>
 
-      {/* Graph Section with Filters */}
       <div className="bg-white rounded-2xl border border-slate-200/60 p-5 mb-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-sm font-semibold text-slate-900">Net Worth History</h3>
@@ -186,9 +183,7 @@ export default function NetWorth() {
 
       <NetWorthProjector currentNetWorth={currentNW} monthlyIncome={monthlyIncome} monthlyExpenses={monthlyExpenses} />
 
-      {/* Asset / Liability Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-        {/* Assets */}
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-emerald-700">Asset Breakdown</h3>
@@ -211,7 +206,6 @@ export default function NetWorth() {
           )}
         </div>
 
-        {/* Liabilities */}
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-red-600">Liability Breakdown</h3>

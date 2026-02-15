@@ -1,10 +1,9 @@
 import db from './database.service.js';
 
 export const accountService = {
-  // Syncs investment balances AND takes a Net Worth Snapshot for history
-  async syncBalancesFromInvestments() {
+  // Now accepts a specific date (from the client)
+  async syncBalancesFromInvestments(clientDate) {
     // --- STEP 1: Update Accounts from Investments ---
-    // We use db.raw() because standard .list() doesn't support aggregation (SUM)
     const query = `
       SELECT account_id, SUM(current_value) as total_value 
       FROM investments 
@@ -12,44 +11,45 @@ export const accountService = {
       GROUP BY account_id
     `;
     
-    // Use the .raw() method which exists on the service instance
-    const totals = db.raw(query);
+    // Check if we need to use query or prepare based on DB adapter
+    const totals = db.query ? db.query(query) : (db.prepare ? db.prepare(query).all() : []);
+    
     let updates = 0;
     
-    // Update accounts using the service's .update() method abstraction
-    for (const { account_id, total_value } of totals) {
-      if (total_value !== null) {
-         try {
-           const now = new Date().toISOString();
-           // Update the account balance and last_synced timestamp
-           db.update('Account', account_id, {
-             balance: total_value,
-             last_synced: now
-           });
+    // Helper to run updates safely
+    const updateAccount = (id, balance) => {
+      const updateQuery = 'UPDATE accounts SET balance = ?, last_synced = datetime("now"), updated_at = datetime("now") WHERE id = ?';
+      if (db.run) {
+        db.run(updateQuery, [balance, id]);
+      } else if (db.prepare) {
+        db.prepare(updateQuery).run(balance, id);
+      }
+    };
+
+    if (totals && totals.length > 0) {
+      for (const { account_id, total_value } of totals) {
+        if (total_value !== null) {
+           updateAccount(account_id, total_value);
            updates++;
-         } catch (err) {
-           console.error(`Failed to update account ${account_id}:`, err);
-         }
+        }
       }
     }
     
-    // --- STEP 2: Take Net Worth Snapshot (Historical Data) ---
-    // This ensures every sync creates a history point for the graph
-    await this.takeSnapshot();
+    // --- STEP 2: Take Net Worth Snapshot ---
+    // Pass the clientDate to the snapshot function
+    await this.takeSnapshot(clientDate);
     
     return { success: true, accounts_updated: updates, snapshot_taken: true };
   },
 
-  // Helper to generate a snapshot record
-  async takeSnapshot() {
+  // Now accepts a targetDate
+  async takeSnapshot(targetDate) {
     try {
       const accounts = db.list('Account');
       
-      // SQLite boolean helper (handles 1/0 returned by DB)
       const isTrue = (val) => val === 1 || val === true || val === "true";
       const isFalse = (val) => val === 0 || val === false || val === "false";
 
-      // Calculate Net Worth
       const assets = accounts.filter(a => isTrue(a.is_asset) && !isFalse(a.is_active));
       const liabilities = accounts.filter(a => isFalse(a.is_asset) && !isFalse(a.is_active));
 
@@ -57,8 +57,9 @@ export const accountService = {
       const totalLiabilities = liabilities.reduce((s, a) => s + (a.balance || 0), 0);
       const netWorth = totalAssets - totalLiabilities;
 
-      // Date Formatting
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      // USE CLIENT DATE if provided, otherwise default to server time
+      // This fixes the "Tomorrow" bug
+      const today = targetDate || new Date().toISOString().split('T')[0];
       const month = today.substring(0, 7); // YYYY-MM
 
       const snapshotData = {
@@ -74,15 +75,14 @@ export const accountService = {
         })))
       };
 
-      // Upsert: If we already synced today, update the record to reflect latest numbers.
       const existing = db.list('NetWorthSnapshot', { date: today });
       
       if (existing && existing.length > 0) {
         db.update('NetWorthSnapshot', existing[0].id, snapshotData);
-        console.log("Updated existing snapshot for today");
+        console.log(`Updated snapshot for ${today}`);
       } else {
         db.create('NetWorthSnapshot', snapshotData);
-        console.log("Created new snapshot for today");
+        console.log(`Created snapshot for ${today}`);
       }
     } catch (error) {
       console.error("Failed to take snapshot during sync:", error);
