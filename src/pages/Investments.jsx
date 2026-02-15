@@ -157,19 +157,26 @@ export default function Investments() {
 
       {allocationData.length > 0 && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5 mb-6">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Asset Allocation</h3>
-          <div className="flex items-center gap-6">
-            <ResponsiveContainer width={160} height={160}>
-              <PieChart><Pie data={allocationData} dataKey="value" innerRadius={45} outerRadius={70} paddingAngle={2} stroke="none">
-                {allocationData.map(d => <Cell key={d.key} fill={ASSET_COLORS[d.key] || "#94a3b8"} />)}
-              </Pie><Tooltip formatter={(v) => formatCurrency(v)} contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#000" }} /></PieChart>
-            </ResponsiveContainer>
-            <div className="flex-1 grid grid-cols-2 gap-2">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4">Portfolio</h3>
+          <div className="flex items-center gap-6 max-w-xl mx-auto">
+            <div className="w-[160px] h-[160px] md:w-[200px] md:h-[200px] shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart><Pie data={allocationData} dataKey="value" innerRadius="55%" outerRadius="85%" paddingAngle={2} stroke="none">
+                  {allocationData.map(d => <Cell key={d.key} fill={ASSET_COLORS[d.key] || "#94a3b8"} />)}
+                </Pie><Tooltip formatter={(v) => formatCurrency(v)} contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#000" }} /></PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex-1 space-y-2.5">
               {allocationData.map(d => (
-                <div key={d.key} className="flex items-center gap-2 text-xs">
-                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ASSET_COLORS[d.key] }} />
-                  <span className="text-slate-600 dark:text-slate-400 capitalize">{d.name}</span>
-                  <span className="text-slate-400 dark:text-slate-500 ml-auto">{((d.value / totalValue) * 100).toFixed(0)}%</span>
+                <div key={d.key} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ASSET_COLORS[d.key] }} />
+                    <span className="text-slate-600 dark:text-slate-400 capitalize">{d.name}</span>
+                  </div>
+                  <div className="text-right shrink-0 ml-2">
+                    <span className="font-medium text-slate-900 dark:text-slate-100">{formatCurrency(d.value)}</span>
+                    <span className="text-slate-400 ml-1">({((d.value / totalValue) * 100).toFixed(0)}%)</span>
+                  </div>
                 </div>
               ))}
             </div>
