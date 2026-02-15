@@ -10,6 +10,8 @@ import CategoryBreakdown from "../components/dashboard/CategoryBreakdown";
 import RecentTransactions from "../components/dashboard/RecentTransactions";
 import AccountsSummary from "../components/dashboard/AccountsSummary";
 import IncomeBreakdown from "../components/dashboard/IncomeBreakdown";
+import SavingsBreakdown from "../components/dashboard/SavingsBreakdown";
+import RecurringCosts from "../components/dashboard/RecurringCosts";
 import { formatCurrency } from "../components/shared/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -195,19 +197,25 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        <CashFlowChart data={cashFlowData} isLoading={loadingReport} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
-          <IncomeBreakdown transactions={transactions} startDate={startDate} endDate={endDate} />
-          <CategoryBreakdown transactions={transactions} startDate={startDate} endDate={endDate} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Main Row: Cash Flow (2/3) + Accounts (1/3) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <div className="lg:col-span-2">
-          <RecentTransactions transactions={transactions} />
+          <CashFlowChart data={cashFlowData} isLoading={loadingReport} />
         </div>
         <AccountsSummary accounts={accounts} />
+      </div>
+
+      {/* Breakdown Row: Income / Spending / Savings */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <IncomeBreakdown transactions={transactions} startDate={startDate} endDate={endDate} />
+        <CategoryBreakdown transactions={transactions} startDate={startDate} endDate={endDate} />
+        <SavingsBreakdown transactions={transactions} startDate={startDate} endDate={endDate} />
+      </div>
+
+      {/* Secondary Row: Recurring Costs (1/2) + Recent Transactions (1/2) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <RecurringCosts transactions={transactions} />
+        <RecentTransactions transactions={transactions} isLoading={isLoading} />
       </div>
     </div>
   );

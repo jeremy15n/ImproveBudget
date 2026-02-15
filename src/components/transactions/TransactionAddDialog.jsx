@@ -60,13 +60,13 @@ export default function TransactionAddDialog({ open, onClose, onSave, accounts }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
         <DialogHeader>
           <DialogTitle>Add Transaction{rows.length > 1 ? "s" : ""}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           {rows.map((row, idx) => (
-            <div key={idx} className={`space-y-3 ${rows.length > 1 ? "p-3 border border-slate-200 rounded-xl relative" : ""}`}>
+            <div key={idx} className={`space-y-3 ${rows.length > 1 ? "p-3 border border-slate-200 dark:border-slate-700 rounded-xl relative" : ""}`}>
               {rows.length > 1 && (
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-medium text-slate-500">Transaction {idx + 1}</span>

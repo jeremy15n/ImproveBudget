@@ -9,10 +9,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import PageHeader from "../components/shared/PageHeader";
 import RecycleBin from "../components/shared/RecycleBin";
 
+const emptyCategory = { name: "", label: "", color: "#6366f1" };
+
 export default function Categories() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", label: "", color: "#6366f1" });
+  const [form, setForm] = useState(emptyCategory);
+  const [addRows, setAddRows] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const qc = useQueryClient();
 
@@ -22,7 +25,7 @@ export default function Categories() {
   });
 
   const createMut = useMutation({
-    mutationFn: (d) => apiClient.entities.Category.create(d),
+    mutationFn: (items) => apiClient.entities.Category.bulkCreate(items),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["categories"] }); closeDialog(); },
   });
   const updateMut = useMutation({
@@ -34,29 +37,31 @@ export default function Categories() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["categories"] }); setDeleteConfirm(null); },
   });
 
-  const closeDialog = () => {
-    setDialogOpen(false);
-    setEditing(null);
-    setForm({ name: "", label: "", color: "#6366f1" });
-  };
+  const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm(emptyCategory); setAddRows([]); };
+  const openCreate = () => { setEditing(null); setAddRows([{ ...emptyCategory }]); setDialogOpen(true); };
+  const openEdit = (cat) => { setForm({ name: cat.name, label: cat.label, color: cat.color }); setEditing(cat); setDialogOpen(true); };
 
-  const openEdit = (cat) => {
-    setForm({ name: cat.name, label: cat.label, color: cat.color });
-    setEditing(cat);
-    setDialogOpen(true);
-  };
+  const handleAddRow = () => setAddRows([...addRows, { ...emptyCategory }]);
+  const handleRemoveRow = (index) => { if (addRows.length > 1) setAddRows(addRows.filter((_, i) => i !== index)); };
+  const handleUpdateRow = (index, field, value) => setAddRows(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r));
 
   const handleSave = () => {
-    const data = {
-      ...form,
-      name: form.name || form.label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""),
-      is_default: 0,
-      sort_order: editing ? editing.sort_order : categories.length,
-    };
     if (editing) {
+      const data = {
+        ...form,
+        name: form.name || form.label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""),
+        is_default: 0,
+        sort_order: editing.sort_order,
+      };
       updateMut.mutate({ id: editing.id, d: data });
     } else {
-      createMut.mutate(data);
+      const items = addRows.map((row, idx) => ({
+        ...row,
+        name: row.name || row.label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""),
+        is_default: 0,
+        sort_order: categories.length + idx,
+      }));
+      createMut.mutate(items);
     }
   };
 
@@ -82,7 +87,7 @@ export default function Categories() {
                 </div>
               )}
             />
-            <Button onClick={() => setDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
+            <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500">
               <Plus className="w-4 h-4 mr-2" />Add Category
             </Button>
           </div>
@@ -130,53 +135,68 @@ export default function Categories() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Category" : "Add Category"}</DialogTitle>
+            <DialogTitle>{editing ? "Edit Category" : "Add Categories"}</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Label</Label>
-              <Input
-                placeholder="e.g. Pet Care"
-                value={form.label}
-                onChange={(e) => setForm({ ...form, label: e.target.value })}
-              />
-            </div>
-            {editing && (
-              <div className="grid gap-2">
-                <Label>Name (ID)</Label>
-                <Input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="text-slate-500"
-                />
-                <p className="text-[11px] text-slate-400">Used internally for matching.</p>
+          <div className="py-4 overflow-y-auto pr-1">
+            {editing ? (
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label>Label</Label>
+                  <Input placeholder="e.g. Pet Care" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Name (ID)</Label>
+                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="text-slate-500" />
+                  <p className="text-[11px] text-slate-400">Used internally for matching.</p>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Color</Label>
+                  <div className="flex items-center gap-3">
+                    <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-10 h-10 rounded-lg border border-slate-200 cursor-pointer p-0.5" />
+                    <Input value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} placeholder="#6366f1" className="flex-1" />
+                    <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: form.color }} />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {addRows.map((row, idx) => (
+                  <div key={idx} className={`space-y-3 ${addRows.length > 1 ? "p-3 border border-slate-200 dark:border-slate-700 rounded-xl" : ""}`}>
+                    {addRows.length > 1 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-slate-500">Category {idx + 1}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveRow(idx)}>
+                          <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                        </Button>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="grid gap-1.5">
+                        <Label className="text-xs">Label</Label>
+                        <Input className="h-8 text-xs" placeholder="e.g. Pet Care" value={row.label} onChange={(e) => handleUpdateRow(idx, "label", e.target.value)} />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label className="text-xs">Color</Label>
+                        <div className="flex items-center gap-2">
+                          <input type="color" value={row.color} onChange={(e) => handleUpdateRow(idx, "color", e.target.value)} className="w-8 h-8 rounded-md border border-slate-200 dark:border-slate-700 cursor-pointer p-0.5 shrink-0" />
+                          <Input className="h-8 text-xs flex-1" value={row.color} onChange={(e) => handleUpdateRow(idx, "color", e.target.value)} placeholder="#6366f1" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" className="w-full border-dashed dark:border-slate-700" onClick={handleAddRow}>
+                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Another Category
+                </Button>
               </div>
             )}
-            <div className="grid gap-2">
-              <Label>Color</Label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={form.color}
-                  onChange={(e) => setForm({ ...form, color: e.target.value })}
-                  className="w-10 h-10 rounded-lg border border-slate-200 cursor-pointer p-0.5"
-                />
-                <Input
-                  value={form.color}
-                  onChange={(e) => setForm({ ...form, color: e.target.value })}
-                  placeholder="#6366f1"
-                  className="flex-1"
-                />
-                <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: form.color }} />
-              </div>
-            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
-            <Button onClick={handleSave} disabled={!form.label.trim()} className="bg-indigo-600 hover:bg-indigo-700">
-              {editing ? "Update" : "Create"}
+            <Button onClick={handleSave} disabled={editing ? !form.label.trim() : !addRows.some(r => r.label.trim())} className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500">
+              {editing ? "Update" : `Save ${addRows.length > 1 ? addRows.length + " Categories" : "Category"}`}
             </Button>
           </DialogFooter>
         </DialogContent>

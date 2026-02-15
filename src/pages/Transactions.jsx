@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftRight, Trash2, X, Tag, RefreshCw, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, PiggyBank, Plus, Check } from "lucide-react"; // Added Check
+import { ArrowLeftRight, Trash2, X, Tag, RefreshCw, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, PiggyBank, Plus, Check, Pencil, Flag } from "lucide-react";
 import PageHeader from "../components/shared/PageHeader";
 import EmptyState from "../components/shared/EmptyState";
 import RecycleBin from "../components/shared/RecycleBin";
@@ -21,7 +21,7 @@ const PAGE_SIZES = [50, 100, 200];
 
 export default function Transactions() {
   const { categoryList } = useCategories();
-  const [filters, setFilters] = useState({ search: "", category: "all", type: "all", account: "all", status: "all" });
+  const [filters, setFilters] = useState({ search: "", category: "all", type: "all", account: "all", status: "all", sortBy: "-date", dateFrom: "", dateTo: "" });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
   const [editTx, setEditTx] = useState(null);
@@ -30,16 +30,20 @@ export default function Transactions() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const qc = useQueryClient();
 
+  const sortBy = filters.sortBy || "-date";
+
   const serverFilters = {};
   if (filters.category !== "all") serverFilters.category = filters.category;
   if (filters.type !== "all") serverFilters.type = filters.type;
   if (filters.account !== "all") serverFilters.account_id = filters.account;
   if (filters.search) serverFilters.search = filters.search;
   if (filters.status === "flagged") serverFilters.is_flagged = 1;
+  if (filters.dateFrom) serverFilters.date_gte = filters.dateFrom;
+  if (filters.dateTo) serverFilters.date_lte = filters.dateTo;
 
   const { data: result, isLoading } = useQuery({
-    queryKey: ["transactions", page, pageSize, serverFilters],
-    queryFn: () => apiClient.entities.Transaction.listPaginated(page, pageSize, "-date", serverFilters),
+    queryKey: ["transactions", page, pageSize, sortBy, serverFilters],
+    queryFn: () => apiClient.entities.Transaction.listPaginated(page, pageSize, sortBy, serverFilters),
     keepPreviousData: true,
   });
 
@@ -175,7 +179,7 @@ export default function Transactions() {
                 </div>
               )}
             />
-            <Button className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500" size="sm" onClick={() => setShowAddDialog(true)}>
+            <Button className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500" onClick={() => setShowAddDialog(true)}>
               <Plus className="w-4 h-4 mr-1.5" /> Add Transaction
             </Button>
           </div>
@@ -341,7 +345,13 @@ export default function Transactions() {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-0.5">
+                  <Button variant="ghost" size="icon" className={`h-7 w-7 ${t.is_flagged ? "text-amber-500" : "text-slate-400 hover:text-amber-500"}`} onClick={() => updateMut.mutate({ id: t.id, d: { is_flagged: t.is_flagged ? 0 : 1 } })}>
+                    <Flag className="w-3.5 h-3.5" fill={t.is_flagged ? "currentColor" : "none"} />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-indigo-500" onClick={() => setEditTx(t)}>
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-red-500" onClick={() => deleteMut.mutate(t.id)}>
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>

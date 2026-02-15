@@ -77,7 +77,7 @@ export default function Accounts() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
           <DialogHeader><DialogTitle>{editing ? "Edit Account" : "Add Accounts"}</DialogTitle></DialogHeader>
           <div className="py-4 overflow-y-auto pr-1">
             {editing ? (

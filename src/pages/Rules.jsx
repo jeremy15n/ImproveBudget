@@ -16,13 +16,14 @@ import { toast } from "sonner";
 
 const MATCH_TYPES = ["contains", "starts_with", "exact"];
 
-const emptyRule = { match_pattern: "", match_type: "contains", category: "uncategorized", merchant_clean_name: "", priority: 0 };
+const emptyRule = () => ({ match_pattern: "", match_type: "contains", category: "uncategorized", merchant_clean_name: "", priority: 0 });
 
 export default function Rules() {
   const { categoryList, categoryColors, getCategoryLabel } = useCategories();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState(emptyRule);
+  const [form, setForm] = useState(emptyRule());
+  const [addRows, setAddRows] = useState([]);
   const [running, setRunning] = useState(false);
   const qc = useQueryClient();
 
@@ -32,7 +33,7 @@ export default function Rules() {
   });
 
   const createMut = useMutation({
-    mutationFn: (d) => apiClient.entities.CategoryRule.create(d),
+    mutationFn: (items) => apiClient.entities.CategoryRule.bulkCreate(items),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["rules"] }); closeDialog(); },
   });
   const updateMut = useMutation({
@@ -44,12 +45,24 @@ export default function Rules() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["rules"] }),
   });
 
-  const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm(emptyRule); };
+  const closeDialog = () => { setDialogOpen(false); setEditing(null); setForm(emptyRule()); setAddRows([]); };
+  const openCreate = () => { setEditing(null); setAddRows([emptyRule()]); setDialogOpen(true); };
+
+  const handleAddRow = () => setAddRows([...addRows, emptyRule()]);
+  const handleRemoveRow = (index) => { if (addRows.length > 1) setAddRows(addRows.filter((_, i) => i !== index)); };
+  const handleUpdateRow = (index, field, value) => setAddRows(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r));
+
+  const handleSave = () => {
+    if (editing) {
+      updateMut.mutate({ id: editing.id, d: form });
+    } else {
+      createMut.mutate(addRows);
+    }
+  };
 
   const runRules = async () => {
     setRunning(true);
     try {
-      // Fetch ALL transactions (not just uncategorized) so rules can fix wrong categories too
       let allTransactions = [];
       let offset = 0;
       const batchSize = 500;
@@ -58,11 +71,9 @@ export default function Rules() {
         allTransactions = allTransactions.concat(batch);
         if (batch.length < batchSize) break;
         offset += batchSize;
-        // Simple pagination guard - fetch up to 5000 max
         if (offset >= 5000) break;
       }
 
-      // Sort rules by priority (highest first)
       const activeRules = rules
         .filter(r => r.is_active !== 0)
         .sort((a, b) => (b.priority || 0) - (a.priority || 0));
@@ -79,7 +90,6 @@ export default function Rules() {
           else if (rule.match_type === "exact") isMatch = merchant === pattern;
 
           if (isMatch) {
-            // Check if anything actually needs to change
             const needsCategoryUpdate = tx.category !== rule.category;
             const needsNameUpdate = rule.merchant_clean_name && tx.merchant_clean !== rule.merchant_clean_name;
 
@@ -130,13 +140,13 @@ export default function Rules() {
               {running ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
               Run Rules
             </Button>
-            <Button onClick={() => setDialogOpen(true)} className="bg-indigo-600 hover:bg-indigo-700"><Plus className="w-4 h-4 mr-2" />Add Rule</Button>
+            <Button onClick={openCreate} className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500"><Plus className="w-4 h-4 mr-2" />Add Rule</Button>
           </div>
         }
       />
 
       {rules.length === 0 ? (
-        <EmptyState icon={Settings} title="No rules yet" description="Create rules to automatically categorize transactions based on merchant name patterns." actionLabel="Create Rule" onAction={() => setDialogOpen(true)} />
+        <EmptyState icon={Settings} title="No rules yet" description="Create rules to automatically categorize transactions based on merchant name patterns." actionLabel="Create Rule" onAction={openCreate} />
       ) : (
         <div className="space-y-2">
           {rules.map((r) => (
@@ -161,22 +171,76 @@ export default function Rules() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>{editing ? "Edit Rule" : "Add Rule"}</DialogTitle></DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2 grid gap-2"><Label>Match Pattern</Label><Input value={form.match_pattern} onChange={(e) => setForm({ ...form, match_pattern: e.target.value })} placeholder="e.g., NETFLIX, AMAZON" /></div>
-              <div className="grid gap-2"><Label>Match Type</Label><Select value={form.match_type} onValueChange={(v) => setForm({ ...form, match_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{MATCH_TYPES.map(m => <SelectItem key={m} value={m}>{m.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select></div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2"><Label>Category</Label><Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{categoryList.map(c => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}</SelectContent></Select></div>
-              <div className="grid gap-2"><Label>Clean Name (optional)</Label><Input value={form.merchant_clean_name || ""} onChange={(e) => setForm({ ...form, merchant_clean_name: e.target.value })} placeholder="e.g., Netflix" /></div>
-            </div>
-            <div className="grid gap-2 w-32"><Label>Priority</Label><Input type="number" value={form.priority || 0} onChange={(e) => setForm({ ...form, priority: parseInt(e.target.value) || 0 })} /></div>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+          <DialogHeader><DialogTitle>{editing ? "Edit Rule" : "Add Rules"}</DialogTitle></DialogHeader>
+          <div className="py-4 overflow-y-auto pr-1">
+            {editing ? (
+              <div className="grid gap-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2 grid gap-2"><Label>Match Pattern</Label><Input value={form.match_pattern} onChange={(e) => setForm({ ...form, match_pattern: e.target.value })} placeholder="e.g., NETFLIX, AMAZON" /></div>
+                  <div className="grid gap-2"><Label>Match Type</Label><Select value={form.match_type} onValueChange={(v) => setForm({ ...form, match_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{MATCH_TYPES.map(m => <SelectItem key={m} value={m}>{m.replace(/_/g, " ")}</SelectItem>)}</SelectContent></Select></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2"><Label>Category</Label><Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{categoryList.map(c => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="grid gap-2"><Label>Clean Name (optional)</Label><Input value={form.merchant_clean_name || ""} onChange={(e) => setForm({ ...form, merchant_clean_name: e.target.value })} placeholder="e.g., Netflix" /></div>
+                </div>
+                <div className="grid gap-2 w-32"><Label>Priority</Label><Input type="number" value={form.priority || 0} onChange={(e) => setForm({ ...form, priority: parseInt(e.target.value) || 0 })} /></div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {addRows.map((row, idx) => (
+                  <div key={idx} className={`space-y-3 ${addRows.length > 1 ? "p-3 border border-slate-200 dark:border-slate-700 rounded-xl" : ""}`}>
+                    {addRows.length > 1 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-slate-500">Rule {idx + 1}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveRow(idx)}>
+                          <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                        </Button>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-2 grid gap-1.5">
+                        <Label className="text-xs">Match Pattern</Label>
+                        <Input className="h-8 text-xs" value={row.match_pattern} onChange={(e) => handleUpdateRow(idx, "match_pattern", e.target.value)} placeholder="e.g., NETFLIX" />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label className="text-xs">Match Type</Label>
+                        <Select value={row.match_type} onValueChange={(v) => handleUpdateRow(idx, "match_type", v)}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>{MATCH_TYPES.map(m => <SelectItem key={m} value={m}>{m.replace(/_/g, " ")}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="grid gap-1.5">
+                        <Label className="text-xs">Category</Label>
+                        <Select value={row.category} onValueChange={(v) => handleUpdateRow(idx, "category", v)}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>{categoryList.map(c => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label className="text-xs">Clean Name</Label>
+                        <Input className="h-8 text-xs" value={row.merchant_clean_name || ""} onChange={(e) => handleUpdateRow(idx, "merchant_clean_name", e.target.value)} placeholder="Optional" />
+                      </div>
+                    </div>
+                    <div className="grid gap-1.5 w-24">
+                      <Label className="text-xs">Priority</Label>
+                      <Input type="number" className="h-8 text-xs" value={row.priority || 0} onChange={(e) => handleUpdateRow(idx, "priority", parseInt(e.target.value) || 0)} />
+                    </div>
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" className="w-full border-dashed dark:border-slate-700" onClick={handleAddRow}>
+                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Another Rule
+                </Button>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
-            <Button onClick={() => editing ? updateMut.mutate({ id: editing.id, d: form }) : createMut.mutate(form)} disabled={!form.match_pattern} className="bg-indigo-600 hover:bg-indigo-700">{editing ? "Update" : "Create"}</Button>
+            <Button onClick={handleSave} disabled={editing ? !form.match_pattern : !addRows.some(r => r.match_pattern.trim())} className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500">
+              {editing ? "Update" : `Save ${addRows.length > 1 ? addRows.length + " Rules" : "Rule"}`}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -348,7 +348,6 @@ export default function Budget() {
         actions={
           <div className="flex items-center gap-2">
              <Button
-              size="sm"
               onClick={triggerBooHoo}
               className="text-white bg-gradient-to-r from-red-700 to-rose-900"
             >
@@ -356,7 +355,6 @@ export default function Budget() {
               Boo Hoo!
             </Button>
             <Button
-              size="sm"
               onClick={triggerConfetti}
               className="text-white bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600"
             >
@@ -374,7 +372,7 @@ export default function Budget() {
                 </div>
               )}
             />
-            <Button variant="outline" size="sm" onClick={openCopyDialog} className="dark:border-slate-700 dark:text-slate-300">
+            <Button variant="outline" onClick={openCopyDialog} className="dark:border-slate-700 dark:text-slate-300">
               <Copy className="w-4 h-4 mr-1.5" />Copy Month
             </Button>
           </div>
@@ -600,7 +598,7 @@ export default function Budget() {
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
           <DialogHeader>
             <DialogTitle>
               {editing
@@ -690,7 +688,7 @@ export default function Budget() {
 
       {/* Copy Budget Dialog */}
       <Dialog open={copyDialogOpen} onOpenChange={setCopyDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
           <DialogHeader><DialogTitle>Copy Budget to Other Months</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-4">
             <p className="text-sm text-slate-500 dark:text-slate-400">
