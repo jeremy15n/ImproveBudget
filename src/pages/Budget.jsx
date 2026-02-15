@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { apiClient } from "@/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, PieChart, Pencil, Trash2, ChevronLeft, ChevronRight, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Copy, DollarSign, TrendingDown, PiggyBank, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,15 +15,56 @@ import { formatCurrency } from "../components/shared/formatters";
 import { useCategories } from "../hooks/useCategories";
 import moment from "moment";
 
+const SECTION_CONFIG = {
+  income: {
+    label: "Income",
+    icon: DollarSign,
+    headerBg: "bg-emerald-50 dark:bg-emerald-500/10",
+    headerBorder: "border-emerald-200 dark:border-emerald-500/20",
+    headerText: "text-emerald-700 dark:text-emerald-400",
+    iconBg: "bg-emerald-100 dark:bg-emerald-500/20",
+    iconColor: "text-emerald-600 dark:text-emerald-400",
+    progressColor: "#10b981",
+    actualLabel: "received",
+    overLabel: "extra",
+    underLabel: "remaining",
+  },
+  expense: {
+    label: "Expenses",
+    icon: TrendingDown,
+    headerBg: "bg-rose-50 dark:bg-rose-500/10",
+    headerBorder: "border-rose-200 dark:border-rose-500/20",
+    headerText: "text-rose-700 dark:text-rose-400",
+    iconBg: "bg-rose-100 dark:bg-rose-500/20",
+    iconColor: "text-rose-600 dark:text-rose-400",
+    progressColor: "#f43f5e",
+    actualLabel: "spent",
+    overLabel: "over",
+    underLabel: "remaining",
+  },
+  savings: {
+    label: "Savings",
+    icon: PiggyBank,
+    headerBg: "bg-indigo-50 dark:bg-indigo-500/10",
+    headerBorder: "border-indigo-200 dark:border-indigo-500/20",
+    headerText: "text-indigo-700 dark:text-indigo-400",
+    iconBg: "bg-indigo-100 dark:bg-indigo-500/20",
+    iconColor: "text-indigo-600 dark:text-indigo-400",
+    progressColor: "#6366f1",
+    actualLabel: "saved",
+    overLabel: "extra",
+    underLabel: "remaining",
+  },
+};
+
 export default function Budget() {
-  const { categoryList, categoryColors, getCategoryLabel } = useCategories();
+  const { categoryList, categoryColors, getCategoryLabel, getCategoryType, categoriesByType } = useCategories();
   const [selectedMonth, setSelectedMonth] = useState(moment().format("YYYY-MM"));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  
-  // State for single editing
+  const [dialogType, setDialogType] = useState("expense");
+
   const [form, setForm] = useState({ category: "groceries", monthly_limit: 0, month: selectedMonth });
-  // State for bulk creation
   const [addRows, setAddRows] = useState([]);
 
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
@@ -40,8 +81,7 @@ export default function Budget() {
     const base = moment(selectedMonth, "YYYY-MM");
     const months = [];
     for (let i = -3; i <= 3; i++) {
-      const m = base.clone().add(i, "month");
-      months.push(m.format("YYYY-MM"));
+      months.push(base.clone().add(i, "month").format("YYYY-MM"));
     }
     return months;
   }, [selectedMonth]);
@@ -76,7 +116,7 @@ export default function Budget() {
     mutationFn: ({ id, d }) => apiClient.entities.Budget.update(id, d),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["budgets"] }); closeDialog(); },
   });
-  
+
   const deleteMut = useMutation({
     mutationFn: (id) => apiClient.entities.Budget.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["budgets"] }),
@@ -142,8 +182,7 @@ export default function Budget() {
   const copyMonthOptions = useMemo(() => {
     const months = [];
     for (let i = -12; i <= 6; i++) {
-      const m = moment().add(i, "month").format("YYYY-MM");
-      months.push(m);
+      months.push(moment().add(i, "month").format("YYYY-MM"));
     }
     return months;
   }, []);
@@ -155,14 +194,17 @@ export default function Budget() {
     setAddRows([]);
   };
 
-  const openAddDialog = () => {
+  const openAddDialog = (type = "expense") => {
+    setDialogType(type);
     setEditing(null);
-    setAddRows([{ category: categoryList[0] || "groceries", monthly_limit: 0, month: selectedMonth }]);
+    const defaultCat = categoriesByType[type]?.[0] || categoryList[0] || "groceries";
+    setAddRows([{ category: defaultCat, monthly_limit: 0, month: selectedMonth }]);
     setDialogOpen(true);
   };
 
   const handleAddRow = () => {
-    setAddRows([...addRows, { category: categoryList[0] || "groceries", monthly_limit: 0, month: selectedMonth }]);
+    const defaultCat = categoriesByType[dialogType]?.[0] || categoryList[0] || "groceries";
+    setAddRows([...addRows, { category: defaultCat, monthly_limit: 0, month: selectedMonth }]);
   };
 
   const handleRemoveRow = (index) => {
@@ -182,19 +224,41 @@ export default function Budget() {
     }
   };
 
-  const monthExpenses = useMemo(() => {
+  // Transaction actuals by category
+  const categoryActuals = useMemo(() => {
     const map = {};
     transactions
-      .filter((t) => t.amount < 0 && t.type !== "transfer")
-      .forEach((t) => {
+      .filter(t => t.type !== "transfer" && !t.is_transfer)
+      .forEach(t => {
         const cat = t.category || "uncategorized";
         map[cat] = (map[cat] || 0) + Math.abs(t.amount);
       });
     return map;
   }, [transactions]);
 
-  const totalBudget = budgets.reduce((s, b) => s + (b.monthly_limit || 0), 0);
-  const totalSpent = budgets.reduce((s, b) => s + (monthExpenses[b.category] || 0), 0);
+  // Group budgets by type
+  const budgetsByType = useMemo(() => {
+    const grouped = { income: [], expense: [], savings: [] };
+    budgets.forEach(b => {
+      const type = getCategoryType(b.category);
+      if (grouped[type]) grouped[type].push(b);
+      else grouped.expense.push(b);
+    });
+    return grouped;
+  }, [budgets, getCategoryType]);
+
+  // Totals for each section
+  const sectionTotals = useMemo(() => {
+    const totals = {};
+    for (const type of ["income", "expense", "savings"]) {
+      const planned = budgetsByType[type].reduce((s, b) => s + (b.monthly_limit || 0), 0);
+      const actual = budgetsByType[type].reduce((s, b) => s + (categoryActuals[b.category] || 0), 0);
+      totals[type] = { planned, actual };
+    }
+    return totals;
+  }, [budgetsByType, categoryActuals]);
+
+  const toBeAllocated = sectionTotals.income.planned - sectionTotals.expense.planned - sectionTotals.savings.planned;
 
   const navigateMonth = (direction) => {
     setSelectedMonth(prev =>
@@ -203,15 +267,16 @@ export default function Budget() {
   };
 
   const displayMonth = moment(selectedMonth, "YYYY-MM").format("MMMM YYYY");
+  const totalBudgetItems = budgets.length;
+
+  // Categories available in dialog (filtered by type when adding)
+  const dialogCategories = editing ? categoryList : (categoriesByType[dialogType] || categoryList);
 
   return (
     <div>
       <PageHeader
         title="Budget"
-        subtitle={isFuture
-          ? `${displayMonth} · Planned: ${formatCurrency(totalBudget)}`
-          : `${displayMonth} · ${formatCurrency(totalSpent)} of ${formatCurrency(totalBudget)} spent`
-        }
+        subtitle={`${displayMonth} · ${totalBudgetItems} items`}
         actions={
           <div className="flex items-center gap-2">
             <RecycleBin
@@ -220,20 +285,13 @@ export default function Budget() {
               queryKey={["budgets"]}
               renderRow={(b) => (
                 <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                    {getCategoryLabel(b.category)}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    {b.month} · Limit: {formatCurrency(b.monthly_limit)}
-                  </p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{getCategoryLabel(b.category)}</p>
+                  <p className="text-xs text-slate-400">{b.month} · {formatCurrency(b.monthly_limit)}</p>
                 </div>
               )}
             />
             <Button variant="outline" size="sm" onClick={openCopyDialog} className="dark:border-slate-700 dark:text-slate-300">
               <Copy className="w-4 h-4 mr-1.5" />Copy Month
-            </Button>
-            <Button onClick={openAddDialog} className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600" size="sm">
-              <Plus className="w-4 h-4 mr-1.5" />Add Budget
             </Button>
           </div>
         }
@@ -281,67 +339,195 @@ export default function Budget() {
         </div>
       )}
 
-      {budgets.length === 0 && !loadingBudgets ? (
-        <EmptyState icon={PieChart} title="No budgets for this month" description={`Create budget categories for ${displayMonth} to track spending.`} actionLabel="Create Budget" onAction={openAddDialog} />
-      ) : (
-        <div className="grid gap-3">
-          {budgets.map((b) => {
-            const spent = monthExpenses[b.category] || 0;
-            const pct = b.monthly_limit > 0 ? (spent / b.monthly_limit) * 100 : 0;
-            const isOver = pct > 100;
-            const prevLimit = prevBudgetMap[b.category];
-            const limitDiff = prevLimit !== undefined ? b.monthly_limit - prevLimit : null;
-            return (
-              <div key={b.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-5 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: categoryColors[b.category] || "#cbd5e1" }} />
-                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-200">{getCategoryLabel(b.category)}</span>
-                    {limitDiff !== null && limitDiff !== 0 && (
-                      <span className={`text-[10px] ${limitDiff > 0 ? "text-amber-500" : "text-emerald-500"}`}>
-                        {limitDiff > 0 ? "+" : ""}{formatCurrency(limitDiff)} vs last month
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {!isFuture && (
-                      <>
-                        <span className={`text-sm font-bold ${isOver ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-slate-200"}`}>{formatCurrency(spent)}</span>
-                        <span className="text-xs text-slate-400">/ </span>
-                      </>
-                    )}
-                    <span className="text-xs text-slate-400">{formatCurrency(b.monthly_limit)}</span>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setForm(b); setEditing(b); setDialogOpen(true); }}><Pencil className="w-3.5 h-3.5 text-slate-400" /></Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMut.mutate(b.id)}><Trash2 className="w-3.5 h-3.5 text-red-400" /></Button>
-                  </div>
-                </div>
-                {!isFuture && (
-                  <>
-                    <Progress value={Math.min(pct, 100)} className="h-2" style={{ "--progress-color": isOver ? "#ef4444" : categoryColors[b.category] || "#6366f1" }} />
-                    <div className="flex justify-between mt-2">
-                      <span className="text-[11px] text-slate-400">{pct.toFixed(0)}% used</span>
-                      <span className={`text-[11px] font-medium ${isOver ? "text-red-500 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-                        {isOver ? `${formatCurrency(spent - b.monthly_limit)} over` : `${formatCurrency(b.monthly_limit - spent)} remaining`}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
-            );
-          })}
+      {/* Zero-Based Summary Header */}
+      {totalBudgetItems > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 p-4 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="w-4 h-4 text-slate-400" />
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Month Overview</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="text-center p-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10">
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Income</p>
+              <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{formatCurrency(sectionTotals.income.planned)}</p>
+            </div>
+            <div className="text-center p-2 rounded-lg bg-rose-50 dark:bg-rose-500/10">
+              <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">Expenses</p>
+              <p className="text-lg font-bold text-rose-700 dark:text-rose-300">{formatCurrency(sectionTotals.expense.planned)}</p>
+            </div>
+            <div className="text-center p-2 rounded-lg bg-indigo-50 dark:bg-indigo-500/10">
+              <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">Savings</p>
+              <p className="text-lg font-bold text-indigo-700 dark:text-indigo-300">{formatCurrency(sectionTotals.savings.planned)}</p>
+            </div>
+            <div className={`text-center p-2 rounded-lg ${
+              toBeAllocated === 0
+                ? "bg-emerald-50 dark:bg-emerald-500/10"
+                : toBeAllocated > 0
+                ? "bg-amber-50 dark:bg-amber-500/10"
+                : "bg-red-50 dark:bg-red-500/10"
+            }`}>
+              <p className={`text-[11px] font-medium ${
+                toBeAllocated === 0
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : toBeAllocated > 0
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-red-600 dark:text-red-400"
+              }`}>To Allocate</p>
+              <p className={`text-lg font-bold ${
+                toBeAllocated === 0
+                  ? "text-emerald-700 dark:text-emerald-300"
+                  : toBeAllocated > 0
+                  ? "text-amber-700 dark:text-amber-300"
+                  : "text-red-700 dark:text-red-300"
+              }`}>{formatCurrency(toBeAllocated)}</p>
+            </div>
+          </div>
         </div>
       )}
+
+      {/* Three-Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {["income", "expense", "savings"].map((type) => {
+          const config = SECTION_CONFIG[type];
+          const items = budgetsByType[type];
+          const totals = sectionTotals[type];
+          const Icon = config.icon;
+
+          return (
+            <div key={type} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 overflow-hidden">
+              {/* Section Header */}
+              <div className={`p-4 ${config.headerBg} border-b ${config.headerBorder}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-7 h-7 rounded-lg ${config.iconBg} flex items-center justify-center`}>
+                      <Icon className={`w-3.5 h-3.5 ${config.iconColor}`} />
+                    </div>
+                    <div>
+                      <h3 className={`text-sm font-semibold ${config.headerText}`}>{config.label}</h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {isFuture
+                          ? `Planned: ${formatCurrency(totals.planned)}`
+                          : `${formatCurrency(totals.actual)} of ${formatCurrency(totals.planned)} ${config.actualLabel}`
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`h-7 text-xs ${config.headerText}`}
+                    onClick={() => openAddDialog(type)}
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" />Add
+                  </Button>
+                </div>
+              </div>
+
+              {/* Budget Items */}
+              <div className="p-3 space-y-2">
+                {items.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <p className="text-xs text-slate-400">No {config.label.toLowerCase()} planned</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`mt-2 text-xs ${config.headerText}`}
+                      onClick={() => openAddDialog(type)}
+                    >
+                      <Plus className="w-3 h-3 mr-1" />Add {config.label}
+                    </Button>
+                  </div>
+                ) : (
+                  items.map((b) => {
+                    const actual = categoryActuals[b.category] || 0;
+                    const pct = b.monthly_limit > 0 ? (actual / b.monthly_limit) * 100 : 0;
+                    const isOver = pct > 100;
+                    const prevLimit = prevBudgetMap[b.category];
+                    const limitDiff = prevLimit !== undefined ? b.monthly_limit - prevLimit : null;
+
+                    return (
+                      <div key={b.id} className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: categoryColors[b.category] || "#cbd5e1" }} />
+                            <span className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{getCategoryLabel(b.category)}</span>
+                            {limitDiff !== null && limitDiff !== 0 && (
+                              <span className={`text-[10px] shrink-0 ${limitDiff > 0 ? "text-amber-500" : "text-emerald-500"}`}>
+                                {limitDiff > 0 ? "+" : ""}{formatCurrency(limitDiff)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setForm(b); setEditing(b); setDialogType(type); setDialogOpen(true); }}>
+                              <Pencil className="w-3 h-3 text-slate-400" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteMut.mutate(b.id)}>
+                              <Trash2 className="w-3 h-3 text-red-400" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-baseline justify-between mb-1.5">
+                          {!isFuture ? (
+                            <>
+                              <span className={`text-sm font-bold ${isOver && type === "expense" ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-slate-100"}`}>
+                                {formatCurrency(actual)}
+                              </span>
+                              <span className="text-[11px] text-slate-400">/ {formatCurrency(b.monthly_limit)}</span>
+                            </>
+                          ) : (
+                            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{formatCurrency(b.monthly_limit)}</span>
+                          )}
+                        </div>
+
+                        {!isFuture && (
+                          <>
+                            <Progress
+                              value={Math.min(pct, 100)}
+                              className="h-1.5"
+                              style={{ "--progress-color": isOver && type === "expense" ? "#ef4444" : config.progressColor }}
+                            />
+                            <div className="flex justify-between mt-1">
+                              <span className="text-[10px] text-slate-400">{pct.toFixed(0)}% {config.actualLabel}</span>
+                              <span className={`text-[10px] font-medium ${
+                                isOver && type === "expense"
+                                  ? "text-red-500 dark:text-red-400"
+                                  : isOver
+                                  ? "text-emerald-600 dark:text-emerald-400"
+                                  : "text-slate-500 dark:text-slate-400"
+                              }`}>
+                                {isOver
+                                  ? `${formatCurrency(actual - b.monthly_limit)} ${config.overLabel}`
+                                  : `${formatCurrency(b.monthly_limit - actual)} ${config.underLabel}`
+                                }
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Budget" : `Add Budget${addRows.length > 1 ? "s" : ""}`}</DialogTitle>
+            <DialogTitle>
+              {editing
+                ? "Edit Budget Item"
+                : `Add ${SECTION_CONFIG[dialogType]?.label || "Budget"}`
+              }
+            </DialogTitle>
           </DialogHeader>
-          
+
           <div className="py-4 overflow-y-auto pr-1">
             {editing ? (
-              // Single Edit Mode
               <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label>Category</Label>
@@ -351,7 +537,7 @@ export default function Budget() {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label>Monthly Limit ($)</Label>
+                  <Label>Planned Amount ($)</Label>
                   <Input type="number" value={form.monthly_limit} onChange={(e) => setForm({ ...form, monthly_limit: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div className="grid gap-2">
@@ -360,13 +546,12 @@ export default function Budget() {
                 </div>
               </div>
             ) : (
-              // Bulk Add Mode
               <div className="space-y-4">
                 {addRows.map((row, idx) => (
                   <div key={idx} className={`space-y-3 ${addRows.length > 1 ? "p-3 border border-slate-200 dark:border-slate-800 rounded-xl relative bg-slate-50/50 dark:bg-slate-900/50" : ""}`}>
                     {addRows.length > 1 && (
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-slate-500">Budget Item {idx + 1}</span>
+                        <span className="text-xs font-medium text-slate-500">Item {idx + 1}</span>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveRow(idx)}>
                           <Trash2 className="w-3.5 h-3.5 text-red-400" />
                         </Button>
@@ -378,33 +563,33 @@ export default function Budget() {
                           <Label className="text-xs">Category</Label>
                           <Select value={row.category} onValueChange={(v) => handleUpdateRow(idx, "category", v)}>
                             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>{categoryList.map((c) => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}</SelectContent>
+                            <SelectContent>{dialogCategories.map((c) => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
                         <div className="grid gap-1.5">
-                          <Label className="text-xs">Limit ($)</Label>
-                          <Input 
-                            type="number" 
-                            className="h-8 text-xs" 
-                            value={row.monthly_limit} 
-                            onChange={(e) => handleUpdateRow(idx, "monthly_limit", parseFloat(e.target.value) || 0)} 
+                          <Label className="text-xs">Amount ($)</Label>
+                          <Input
+                            type="number"
+                            className="h-8 text-xs"
+                            value={row.monthly_limit}
+                            onChange={(e) => handleUpdateRow(idx, "monthly_limit", parseFloat(e.target.value) || 0)}
                           />
                         </div>
                       </div>
                       <div className="grid gap-1.5">
                         <Label className="text-xs">Month</Label>
-                        <Input 
-                          type="month" 
-                          className="h-8 text-xs" 
-                          value={row.month} 
-                          onChange={(e) => handleUpdateRow(idx, "month", e.target.value)} 
+                        <Input
+                          type="month"
+                          className="h-8 text-xs"
+                          value={row.month}
+                          onChange={(e) => handleUpdateRow(idx, "month", e.target.value)}
                         />
                       </div>
                     </div>
                   </div>
                 ))}
                 <Button variant="outline" size="sm" className="w-full border-dashed dark:border-slate-700" onClick={handleAddRow}>
-                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Another Budget
+                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Another
                 </Button>
               </div>
             )}
@@ -413,7 +598,7 @@ export default function Budget() {
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Cancel</Button>
             <Button onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600">
-              {editing ? "Update" : `Save ${addRows.length > 1 ? addRows.length + " Budgets" : "Budget"}`}
+              {editing ? "Update" : `Save ${addRows.length > 1 ? addRows.length + " Items" : "Item"}`}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -425,7 +610,7 @@ export default function Budget() {
           <DialogHeader><DialogTitle>Copy Budget to Other Months</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-4">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Copy all budget items from a source month to one or more target months. Select a range to copy to multiple months at once.
+              Copy all budget items (income, expenses, and savings) from a source month to one or more target months.
             </p>
             <div className="grid gap-2">
               <Label>Copy From</Label>

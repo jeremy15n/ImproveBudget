@@ -220,52 +220,52 @@ const initializeDatabase = async () => {
   }
 };
 
-// Default categories with colors
+// Default categories with colors and types
 const DEFAULT_CATEGORIES = [
   // Expenses
-  { name: 'mortgage', label: 'Mortgage', color: '#6366f1' },
-  { name: 'gas', label: 'Gas', color: '#8b5cf6' },
-  { name: 'car_payment', label: 'Car Payment', color: '#a855f7' },
-  { name: 'phone_payment', label: 'Phone Payment', color: '#d946ef' },
-  { name: 'phone_bill', label: 'Phone Bill', color: '#ec4899' },
-  { name: 'car_insurance', label: 'Car Insurance', color: '#f43f5e' },
-  { name: 'home_maintenance', label: 'Home Maintenance', color: '#ef4444' },
-  { name: 'car_maintenance', label: 'Car Maintenance', color: '#dc2626' },
-  { name: 'clothes', label: 'Clothes', color: '#f97316' },
-  { name: 'haircut', label: 'Haircut', color: '#f59e0b' },
-  { name: 'eating_out', label: 'Eating Out', color: '#eab308' },
-  { name: 'groceries', label: 'Groceries', color: '#84cc16' },
-  { name: 'subscriptions', label: 'Subscriptions', color: '#14b8a6' },
-  { name: 'pay_back_taxes', label: 'Pay Back Taxes', color: '#06b6d4' },
-  { name: 'entertainment', label: 'Entertainment', color: '#0ea5e9' },
-  { name: 'wants', label: 'Wants', color: '#3b82f6' },
-  { name: 'medical', label: 'Medical', color: '#10b981' },
-  { name: 'emergency', label: 'Emergency', color: '#ef4444' },
-  { name: 'hygiene', label: 'Hygiene', color: '#d946ef' },
-  { name: 'life_insurance', label: 'Life Insurance', color: '#14b8a6' },
-  { name: 'water_bill', label: 'Water Bill', color: '#0ea5e9' },
-  { name: 'electric_bill', label: 'Electric Bill', color: '#f59e0b' },
-  { name: 'internet_bill', label: 'Internet Bill', color: '#8b5cf6' },
-  { name: 'trash_bill', label: 'Trash Bill', color: '#64748b' },
-  { name: 'miscellaneous_expenses', label: 'Miscellaneous Expenses', color: '#94a3b8' },
-  { name: 'amex_gold_fee', label: 'AMEX Gold Fee', color: '#f59e0b' },
-  { name: 'car_registration', label: 'Car Registration', color: '#6366f1' },
+  { name: 'mortgage', label: 'Mortgage', color: '#6366f1', type: 'expense' },
+  { name: 'gas', label: 'Gas', color: '#8b5cf6', type: 'expense' },
+  { name: 'car_payment', label: 'Car Payment', color: '#a855f7', type: 'expense' },
+  { name: 'phone_payment', label: 'Phone Payment', color: '#d946ef', type: 'expense' },
+  { name: 'phone_bill', label: 'Phone Bill', color: '#ec4899', type: 'expense' },
+  { name: 'car_insurance', label: 'Car Insurance', color: '#f43f5e', type: 'expense' },
+  { name: 'home_maintenance', label: 'Home Maintenance', color: '#ef4444', type: 'expense' },
+  { name: 'car_maintenance', label: 'Car Maintenance', color: '#dc2626', type: 'expense' },
+  { name: 'clothes', label: 'Clothes', color: '#f97316', type: 'expense' },
+  { name: 'haircut', label: 'Haircut', color: '#f59e0b', type: 'expense' },
+  { name: 'eating_out', label: 'Eating Out', color: '#eab308', type: 'expense' },
+  { name: 'groceries', label: 'Groceries', color: '#84cc16', type: 'expense' },
+  { name: 'subscriptions', label: 'Subscriptions', color: '#14b8a6', type: 'expense' },
+  { name: 'pay_back_taxes', label: 'Pay Back Taxes', color: '#06b6d4', type: 'expense' },
+  { name: 'entertainment', label: 'Entertainment', color: '#0ea5e9', type: 'expense' },
+  { name: 'wants', label: 'Wants', color: '#3b82f6', type: 'expense' },
+  { name: 'medical', label: 'Medical', color: '#10b981', type: 'expense' },
+  { name: 'emergency', label: 'Emergency', color: '#ef4444', type: 'expense' },
+  { name: 'hygiene', label: 'Hygiene', color: '#d946ef', type: 'expense' },
+  { name: 'life_insurance', label: 'Life Insurance', color: '#14b8a6', type: 'expense' },
+  { name: 'water_bill', label: 'Water Bill', color: '#0ea5e9', type: 'expense' },
+  { name: 'electric_bill', label: 'Electric Bill', color: '#f59e0b', type: 'expense' },
+  { name: 'internet_bill', label: 'Internet Bill', color: '#8b5cf6', type: 'expense' },
+  { name: 'trash_bill', label: 'Trash Bill', color: '#64748b', type: 'expense' },
+  { name: 'miscellaneous_expenses', label: 'Miscellaneous Expenses', color: '#94a3b8', type: 'expense' },
+  { name: 'amex_gold_fee', label: 'AMEX Gold Fee', color: '#f59e0b', type: 'expense' },
+  { name: 'car_registration', label: 'Car Registration', color: '#6366f1', type: 'expense' },
   // Income
-  { name: 'w2_job', label: 'W-2 Job', color: '#22c55e' },
-  { name: 'va_benefits', label: 'VA Benefits', color: '#16a34a' },
-  { name: 'tax_refund', label: 'Tax Refund', color: '#059669' },
-  { name: 'side_job', label: 'Side Job', color: '#047857' },
-  { name: 'other_income', label: 'Other', color: '#10b981' },
-  { name: 'mgib', label: 'MGIB', color: '#34d399' },
+  { name: 'w2_job', label: 'W-2 Job', color: '#22c55e', type: 'income' },
+  { name: 'va_benefits', label: 'VA Benefits', color: '#16a34a', type: 'income' },
+  { name: 'tax_refund', label: 'Tax Refund', color: '#059669', type: 'income' },
+  { name: 'side_job', label: 'Side Job', color: '#047857', type: 'income' },
+  { name: 'other_income', label: 'Other', color: '#10b981', type: 'income' },
+  { name: 'mgib', label: 'MGIB', color: '#34d399', type: 'income' },
   // Savings
-  { name: 'hysa', label: 'HYSA', color: '#6366f1' },
-  { name: 'individual_account', label: 'Individual Account', color: '#818cf8' },
-  { name: 'traditional_ira', label: 'Traditional IRA', color: '#a78bfa' },
-  { name: 'roth_ira', label: 'Roth IRA', color: '#c084fc' },
-  { name: 'hsa', label: 'HSA', color: '#e879f9' },
-  { name: 'mortgage_principal_payment', label: 'Mortgage Principal Payment', color: '#8b5cf6' },
+  { name: 'hysa', label: 'HYSA', color: '#6366f1', type: 'savings' },
+  { name: 'individual_account', label: 'Individual Account', color: '#818cf8', type: 'savings' },
+  { name: 'traditional_ira', label: 'Traditional IRA', color: '#a78bfa', type: 'savings' },
+  { name: 'roth_ira', label: 'Roth IRA', color: '#c084fc', type: 'savings' },
+  { name: 'hsa', label: 'HSA', color: '#e879f9', type: 'savings' },
+  { name: 'mortgage_principal_payment', label: 'Mortgage Principal Payment', color: '#8b5cf6', type: 'savings' },
   // System
-  { name: 'uncategorized', label: 'Uncategorized', color: '#cbd5e1' },
+  { name: 'uncategorized', label: 'Uncategorized', color: '#cbd5e1', type: 'expense' },
 ];
 
 function ensureCategoriesTable(db) {
@@ -276,6 +276,7 @@ function ensureCategoriesTable(db) {
       name TEXT NOT NULL UNIQUE,
       label TEXT NOT NULL,
       color TEXT DEFAULT '#cbd5e1',
+      type TEXT DEFAULT 'expense',
       is_default INTEGER DEFAULT 1,
       sort_order INTEGER DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now'))
@@ -283,12 +284,15 @@ function ensureCategoriesTable(db) {
     db.sqlDb.exec('CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(name)');
     db.sqlDb.exec('CREATE INDEX IF NOT EXISTS idx_categories_sort_order ON categories(sort_order)');
 
+    // Add type column if missing (migration for existing DBs)
+    addCategoryTypeColumn(db);
+
     // Clear old defaults and reseed with current defaults
     db.sqlDb.exec('DELETE FROM categories WHERE is_default = 1');
     for (let i = 0; i < DEFAULT_CATEGORIES.length; i++) {
       const c = DEFAULT_CATEGORIES[i];
       try {
-        db.sqlDb.exec(`INSERT INTO categories (name, label, color, is_default, sort_order) VALUES ('${c.name}', '${c.label}', '${c.color}', 1, ${i})`);
+        db.sqlDb.exec(`INSERT INTO categories (name, label, color, type, is_default, sort_order) VALUES ('${c.name}', '${c.label}', '${c.color}', '${c.type}', 1, ${i})`);
       } catch (e) {
         // Skip if name already exists (user may have customized it)
       }
@@ -297,6 +301,37 @@ function ensureCategoriesTable(db) {
     console.log('✓ Categories synced');
   } catch (error) {
     console.error('Error ensuring categories table:', error.message);
+  }
+}
+
+/**
+ * Add type column to categories table for existing databases
+ */
+function addCategoryTypeColumn(db) {
+  try {
+    const tableInfo = db.sqlDb.exec("PRAGMA table_info(categories)");
+    if (!tableInfo || !tableInfo[0]) return;
+    const columns = tableInfo[0].values.map(row => row[1]);
+    if (columns.includes('type')) return;
+
+    db.sqlDb.exec("ALTER TABLE categories ADD COLUMN type TEXT DEFAULT 'expense'");
+
+    // Set types for known income categories
+    const incomeCategories = ['w2_job', 'va_benefits', 'tax_refund', 'side_job', 'other_income', 'mgib'];
+    for (const name of incomeCategories) {
+      db.sqlDb.exec(`UPDATE categories SET type = 'income' WHERE name = '${name}'`);
+    }
+
+    // Set types for known savings categories
+    const savingsCategories = ['hysa', 'individual_account', 'traditional_ira', 'roth_ira', 'hsa', 'mortgage_principal_payment'];
+    for (const name of savingsCategories) {
+      db.sqlDb.exec(`UPDATE categories SET type = 'savings' WHERE name = '${name}'`);
+    }
+
+    saveToDisk(db.sqlDb);
+    console.log('✓ Added type column to categories');
+  } catch (error) {
+    console.error('Error adding category type column:', error.message);
   }
 }
 
