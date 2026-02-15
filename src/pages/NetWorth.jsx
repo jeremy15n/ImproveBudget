@@ -32,7 +32,6 @@ export default function NetWorth() {
   });
 
   const syncBalancesMut = useMutation({
-    // FIX 1: Send the current CLIENT date to the backend
     mutationFn: () => apiClient.post('/accounts/sync-balances', { 
       date: moment().format("YYYY-MM-DD") 
     }),
@@ -63,8 +62,6 @@ export default function NetWorth() {
     }
 
     return data.map(s => ({
-      // FIX 2: Better date formatting for graph
-      // If "All Time", show "Feb 14, 26". If specific year, show "Feb 14"
       date: moment(s.date).format(selectedYear === "all" ? "MMM D, YY" : "MMM D"),
       fullDate: moment(s.date).format("MMMM D, YYYY"),
       netWorth: s.net_worth,
@@ -181,9 +178,9 @@ export default function NetWorth() {
         )}
       </div>
 
-      <NetWorthProjector currentNetWorth={currentNW} monthlyIncome={monthlyIncome} monthlyExpenses={monthlyExpenses} />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+      {/* Asset / Liability Breakdown - MOVED UP */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Assets */}
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-emerald-700">Asset Breakdown</h3>
@@ -206,6 +203,7 @@ export default function NetWorth() {
           )}
         </div>
 
+        {/* Liabilities */}
         <div className="bg-white rounded-2xl border border-slate-200/60 p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-red-600">Liability Breakdown</h3>
@@ -228,6 +226,8 @@ export default function NetWorth() {
           )}
         </div>
       </div>
+
+      <NetWorthProjector currentNetWorth={currentNW} monthlyIncome={monthlyIncome} monthlyExpenses={monthlyExpenses} />
     </div>
   );
 }
